@@ -75,6 +75,29 @@ public class DawaClient
         }
     }
 
+    public async IAsyncEnumerable<DawaEntityChange<DawaAccessAddress>>
+        GetChangesAccessAddressAsync(ulong fromTransactionId, ulong toTransactionId)
+    {
+        var url = new Uri(@$"{_baseAddress}/haendelser?entitet=adgangsadresse&txidfra={fromTransactionId}&txidtil={toTransactionId}");
+
+        using var accessAddressResponse = await _httpClient
+                      .GetAsync(url, HttpCompletionOption.ResponseHeadersRead)
+                      .ConfigureAwait(false);
+
+        using var stream = await accessAddressResponse.Content
+                      .ReadAsStreamAsync()
+                      .ConfigureAwait(false);
+
+        var changeStream = JsonSerializer
+            .DeserializeAsyncEnumerable<DawaEntityChange<DawaAccessAddress>>(stream);
+
+        await foreach (var change in changeStream)
+        {
+            yield return change ??
+                throw new DawaEmptyResultException("Received empty value from DAWA.");
+        }
+    }
+
     public async IAsyncEnumerable<DawaRoad> GetRoadsAsync(ulong tId)
     {
         var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");

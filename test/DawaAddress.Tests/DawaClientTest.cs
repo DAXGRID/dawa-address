@@ -34,7 +34,7 @@ public class DawaClientTest
             accessAddresses.Add(accessAddress);
         }
 
-        using (var scope = new AssertionScope())
+        using (var _ = new AssertionScope())
         {
             accessAddresses
                 .Should()
@@ -100,7 +100,7 @@ public class DawaClientTest
             unitAddresses.Add(accessAddress);
         }
 
-        using (var scope = new AssertionScope())
+        using (var _ = new AssertionScope())
         {
             unitAddresses
                 .Should()
@@ -125,6 +125,38 @@ public class DawaClientTest
             unitAddresses.Select(x => x.SuitName).Where(x => !string.IsNullOrWhiteSpace(x))
                 .Should()
                 .HaveCountGreaterThan(0);
+        }
+    }
+
+    [Fact]
+    public async Task Get_access_address_changes()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+
+        var result = new List<DawaEntityChange<DawaAccessAddress>>();
+        await foreach (var change in
+                       client.GetChangesAccessAddressAsync(transaction.Id - 1000, transaction.Id))
+        {
+            if (result.Count == 10000)
+            {
+                break;
+            }
+
+            result.Add(change);
+        }
+
+        using (var _ = new AssertionScope())
+        {
+            result.Should().HaveCountGreaterThan(0);
+            result.Select(x => x.Id).Should().AllSatisfy(x => x.Should().BeGreaterThan(0));
+            result.Select(x => x.Data).Should().AllSatisfy(x => x.Should().NotBeNull());
+
+            // We just test a few of them since the mapping is already tested in the full import.
+            result.Select(x => x.Data.Id).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+            result.Select(x => x.Data.HouseNumber).Should().AllSatisfy(x => x.Should().NotBeEmpty());
         }
     }
 
