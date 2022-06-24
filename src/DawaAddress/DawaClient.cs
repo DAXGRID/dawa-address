@@ -54,9 +54,9 @@ public class DawaClient
         }
     }
 
-    public async IAsyncEnumerable<DawaRoad> GetRoadsAsync(ulong transactionId)
+    public async IAsyncEnumerable<DawaRoad> GetRoadsAsync(ulong tId)
     {
-        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={transactionId}");
+        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");
         using var response = await _httpClient
                       .GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead)
                       .ConfigureAwait(false);
@@ -73,9 +73,9 @@ public class DawaClient
         }
     }
 
-    public async IAsyncEnumerable<DawaPostCode> GetPostCodesAsync(ulong transactionId)
+    public async IAsyncEnumerable<DawaPostCode> GetPostCodesAsync(ulong tId)
     {
-        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=postnummer&txid={transactionId}");
+        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=postnummer&txid={tId}");
 
         using var response = await _httpClient
                       .GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead)
