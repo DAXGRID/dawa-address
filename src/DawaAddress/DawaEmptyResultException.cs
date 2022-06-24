@@ -10,7 +10,9 @@ public class DawaEmptyResultException : Exception
     {
     }
 
-    public DawaEmptyResultException(string? message, Exception? innerException) : base(message, innerException)
+    public DawaEmptyResultException(
+        string? message,
+        Exception? innerException) : base(message, innerException)
     {
     }
 }

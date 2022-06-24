@@ -6,7 +6,6 @@ public record DawaRoad
 {
     [JsonPropertyName("id")]
     public string Id { get; init; }
-
     [JsonPropertyName("navn")]
     public string Name { get; init; }
 
