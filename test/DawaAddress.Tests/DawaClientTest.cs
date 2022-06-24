@@ -14,6 +14,25 @@ public class DawaClientTest
     }
 
     [Fact]
+    public async Task Get_all_access_addresses()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+        var accessAddresses = client.GetAllAccessAddresses(transaction.Id);
+
+        await foreach (var accessAddress in accessAddresses)
+        {
+            accessAddress.Should().NotBeNull();
+            accessAddress.Id.Should().NotBeNullOrWhiteSpace();
+            // We just want to make sure it has results
+            // so we break after first one.
+            break;
+        }
+    }
+
+    [Fact]
     public async Task Get_roads()
     {
         var httpClient = new HttpClient();
@@ -27,7 +46,7 @@ public class DawaClientTest
             road.Should().NotBeNull();
             road.Id.Should().NotBeNullOrWhiteSpace();
             // We just want to make sure it has results
-            // so we break after first on.
+            // so we break after first one.
             break;
         }
     }
@@ -47,7 +66,7 @@ public class DawaClientTest
             road.Number.Should().NotBeNullOrWhiteSpace();
             road.Name.Should().NotBeNullOrWhiteSpace();
             // We just want to make sure it has results
-            // so we break after first on.
+            // so we break after first one.
             break;
         }
     }
