@@ -54,6 +54,27 @@ public class DawaClient
         }
     }
 
+    public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(ulong tId)
+    {
+        var uri = new Uri($"{_baseAddress}/udtraek?entitet=adresse&ndjson&txid={tId}");
+        using var response = await _httpClient
+                      .GetAsync(uri, HttpCompletionOption.ResponseHeadersRead)
+                      .ConfigureAwait(false);
+
+        using var stream = await response.Content
+                      .ReadAsStreamAsync()
+                      .ConfigureAwait(false);
+
+        using var streamReader = new StreamReader(stream);
+
+        string? line = null;
+        while ((line = await streamReader.ReadLineAsync().ConfigureAwait(false)) is not null)
+        {
+            yield return JsonSerializer.Deserialize<DawaUnitAddress>(line)
+                ?? throw new DawaEmptyResultException("Retrieved empty value from DAWA.");
+        }
+    }
+
     public async IAsyncEnumerable<DawaRoad> GetRoadsAsync(ulong tId)
     {
         var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");

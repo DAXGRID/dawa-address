@@ -34,7 +34,6 @@ public class DawaClientTest
             accessAddresses.Add(accessAddress);
         }
 
-
         using (var scope = new AssertionScope())
         {
             accessAddresses
@@ -75,6 +74,55 @@ public class DawaClientTest
                 .HaveCountGreaterThan(0);
 
             accessAddresses.Select(x => x.TownName).Where(x => !string.IsNullOrWhiteSpace(x))
+                .Should()
+                .HaveCountGreaterThan(0);
+        }
+    }
+
+    [Fact]
+    public async Task Get_all_unit_addresses()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+
+        var unitAddresses = new List<DawaUnitAddress>();
+        await foreach (var accessAddress in client.GetAllUnitAddresses(transaction.Id))
+        {
+            // We only want to test on the first 10000
+            // otherwise it would take too long.
+            if (unitAddresses.Count == 10000)
+            {
+                break;
+            }
+
+            unitAddresses.Add(accessAddress);
+        }
+
+        using (var scope = new AssertionScope())
+        {
+            unitAddresses
+                .Should()
+                .HaveCount(10000);
+
+            unitAddresses.Select(x => x.Id)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBeEmpty());
+
+            unitAddresses.Select(x => x.Created)
+                .Should()
+                .AllSatisfy(x => x.Should().BeAfter(new()));
+
+            unitAddresses.Select(x => x.Status)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBe(DawaStatus.None));
+
+            unitAddresses.Select(x => x.FloorName).Where(x => !string.IsNullOrWhiteSpace(x))
+                .Should()
+                .HaveCountGreaterThan(0);
+
+            unitAddresses.Select(x => x.SuitName).Where(x => !string.IsNullOrWhiteSpace(x))
                 .Should()
                 .HaveCountGreaterThan(0);
         }

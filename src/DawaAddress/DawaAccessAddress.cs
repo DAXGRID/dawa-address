@@ -3,20 +3,6 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
-public enum Status
-{
-    [Description("None")]
-    None = 0,
-    [Description("Active")]
-    Active = 1,
-    [Description("Canceled")]
-    Canceled = 2,
-    [Description("Pending")]
-    Pending = 3,
-    [Description("Discontinued")]
-    Discontinued = 4
-}
-
 public record DawaAccessAddress
 {
     [JsonPropertyName("id")]
@@ -28,7 +14,7 @@ public record DawaAccessAddress
     [JsonPropertyName("kommunekode")]
     public string MunicipalCode { get; init; }
     [JsonPropertyName("status")]
-    public Status Status { get; init; }
+    public DawaStatus Status { get; init; }
     [JsonPropertyName("vejkode")]
     public string RoadCode { get; init; }
     [JsonPropertyName("husnr")]
@@ -54,7 +40,7 @@ public record DawaAccessAddress
         DateTime created,
         DateTime updated,
         string municipalCode,
-        Status status,
+        DawaStatus status,
         string roadCode,
         string houseNumber,
         string postDistrictCode,
@@ -65,9 +51,9 @@ public record DawaAccessAddress
         string? plotId,
         Guid roadId)
     {
-        if (status == Status.None)
+        if (status == DawaStatus.None)
         {
-            throw new InvalidEnumArgumentException(nameof(status));
+            throw new InvalidEnumArgumentException($"{nameof(DawaStatus)} is required.");
         }
 
         Id = id;
