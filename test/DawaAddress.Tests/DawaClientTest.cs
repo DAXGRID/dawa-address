@@ -20,15 +20,63 @@ public class DawaClientTest
         var client = new DawaClient(httpClient);
 
         var transaction = await client.GetLatestTransactionAsync();
-        var accessAddresses = client.GetAllAccessAddresses(transaction.Id);
 
-        await foreach (var accessAddress in accessAddresses)
+        var accessAddresses = new List<DawaAccessAddress>();
+        await foreach (var accessAddress in client.GetAllAccessAddresses(transaction.Id))
         {
-            accessAddress.Should().NotBeNull();
-            accessAddress.Id.Should().NotBeNullOrWhiteSpace();
-            // We just want to make sure it has results
-            // so we break after first one.
-            break;
+            // We only want to test on the first 10000
+            // otherwise it would take too long.
+            if (accessAddresses.Count == 10000)
+            {
+                break;
+            }
+
+            accessAddresses.Add(accessAddress);
+        }
+
+
+        using (var scope = new AssertionScope())
+        {
+            accessAddresses
+                .Should()
+                .HaveCount(10000);
+
+            accessAddresses.Select(x => x.Id)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBeEmpty());
+
+            accessAddresses.Select(x => x.HouseNumber)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBeNullOrWhiteSpace());
+
+            accessAddresses.Select(x => x.MunicipalCode)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBeEmpty());
+
+            accessAddresses.Select(x => x.Created)
+                .Should()
+                .AllSatisfy(x => x.Should().BeAfter(new()));
+
+            accessAddresses.Select(x => x.RoadId)
+                .Should()
+                .AllSatisfy(x => x.Should().NotBeEmpty());
+
+            accessAddresses.Select(x => x.NorthCoordinate)
+                .Should()
+                .AllSatisfy(x => x.Should().BeGreaterThan(0));
+
+            accessAddresses.Select(x => x.EastCoordinate)
+                .Should()
+                .AllSatisfy(x => x.Should().BeGreaterThan(0))
+                .Should();
+
+            accessAddresses.Select(x => x.PlotId).Where(x => !string.IsNullOrWhiteSpace(x))
+                .Should()
+                .HaveCountGreaterThan(0);
+
+            accessAddresses.Select(x => x.TownName).Where(x => !string.IsNullOrWhiteSpace(x))
+                .Should()
+                .HaveCountGreaterThan(0);
         }
     }
 
@@ -39,9 +87,8 @@ public class DawaClientTest
         var client = new DawaClient(httpClient);
 
         var transaction = await client.GetLatestTransactionAsync();
-        var roads = client.GetRoadsAsync(transaction.Id);
 
-        await foreach (var road in roads)
+        await foreach (var road in client.GetRoadsAsync(transaction.Id))
         {
             road.Should().NotBeNull();
             road.Id.Should().NotBeNullOrWhiteSpace();
@@ -58,9 +105,8 @@ public class DawaClientTest
         var client = new DawaClient(httpClient);
 
         var transaction = await client.GetLatestTransactionAsync();
-        var postCodes = client.GetPostCodesAsync(transaction.Id);
 
-        await foreach (var road in postCodes)
+        await foreach (var road in client.GetPostCodesAsync(transaction.Id))
         {
             road.Should().NotBeNull();
             road.Number.Should().NotBeNullOrWhiteSpace();

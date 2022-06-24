@@ -20,7 +20,7 @@ public enum Status
 public record DawaAccessAddress
 {
     [JsonPropertyName("id")]
-    public string Id { get; init; }
+    public Guid Id { get; init; }
     [JsonPropertyName("oprettet")]
     public DateTime Created { get; init; }
     [JsonPropertyName("ændret")]
@@ -36,21 +36,21 @@ public record DawaAccessAddress
     [JsonPropertyName("postnr")]
     public string PostDistrictCode { get; init; }
     [JsonPropertyName("etrs89koordinat_øst")]
-    public double? EastCoordinate { get; init; }
+    public double EastCoordinate { get; init; }
     [JsonPropertyName("etrs89koordinat_nord")]
-    public double? NorthCoordinate { get; init; }
+    public double NorthCoordinate { get; init; }
     [JsonPropertyName("adressepunktændringsdato")]
     public DateTime? LocationUpdated { get; init; }
     [JsonPropertyName("supplerendebynavn")]
-    public string TownName { get; init; }
+    public string? TownName { get; init; }
     [JsonPropertyName("matrikelnr")]
-    public string PlotId { get; init; }
+    public string? PlotId { get; init; }
     [JsonPropertyName("navngivenvej_id")]
-    public string RoadId { get; init; }
+    public Guid RoadId { get; init; }
 
     [JsonConstructor]
     public DawaAccessAddress(
-        string id,
+        Guid id,
         DateTime created,
         DateTime updated,
         string municipalCode,
@@ -58,12 +58,12 @@ public record DawaAccessAddress
         string roadCode,
         string houseNumber,
         string postDistrictCode,
-        double? eastCoordinate,
-        double? northCoordinate,
+        double eastCoordinate,
+        double northCoordinate,
         DateTime? locationUpdated,
-        string townName,
-        string plotId,
-        string roadId)
+        string? townName,
+        string? plotId,
+        Guid roadId)
     {
         if (status == Status.None)
         {
