@@ -6,9 +6,9 @@ namespace DawaAddress;
 public record DawaUnitAddress
 {
     [JsonPropertyName("id")]
-    public string Id { get; init; }
+    public Guid Id { get; init; }
     [JsonPropertyName("adgangsadresseid")]
-    public string AccessAddressId { get; init; }
+    public Guid AccessAddressId { get; init; }
     [JsonPropertyName("status")]
     public DawaStatus Status { get; init; }
     [JsonPropertyName("etage")]
@@ -22,8 +22,8 @@ public record DawaUnitAddress
 
     [JsonConstructor]
     public DawaUnitAddress(
-        string id,
-        string accessAddressId,
+        Guid id,
+        Guid accessAddressId,
         DawaStatus status,
         string? floorName,
         string? suitName,

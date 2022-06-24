@@ -161,6 +161,37 @@ public class DawaClientTest
     }
 
     [Fact]
+    public async Task Get_unit_address_changes()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+
+        var result = new List<DawaEntityChange<DawaUnitAddress>>();
+        await foreach (var change in client.GetChangesUnitAddressAsync(transaction.Id - 1000, transaction.Id))
+        {
+            if (result.Count == 10000)
+            {
+                break;
+            }
+
+            result.Add(change);
+        }
+
+        using (var _ = new AssertionScope())
+        {
+            result.Should().HaveCountGreaterThan(0);
+            result.Select(x => x.Id).Should().AllSatisfy(x => x.Should().BeGreaterThan(0));
+            result.Select(x => x.Data).Should().AllSatisfy(x => x.Should().NotBeNull());
+
+            // We just test a few of them since the mapping is already tested in the full import.
+            result.Select(x => x.Data.Id).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+            result.Select(x => x.Data.AccessAddressId).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+        }
+    }
+
+    [Fact]
     public async Task Get_roads()
     {
         var httpClient = new HttpClient();
