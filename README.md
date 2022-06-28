@@ -1,5 +1,8 @@
 # DAWA Address
 
+Provides a simple streaming interface to the DAWA Address API.
+It does simple translation from Danish to English and enables access to both full-load and the changes API.
+
 You can get the NuGet package [here](https://www.nuget.org/packages/DawaAddress).
 
 ## Get latest transaction
