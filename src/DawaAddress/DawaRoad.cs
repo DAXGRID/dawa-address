@@ -8,10 +8,13 @@ public record DawaRoad
     public string Id { get; init; }
     [JsonPropertyName("navn")]
     public string Name { get; init; }
+    [JsonPropertyName("darstatus")]
+    public string DarStatus { get; init; }
 
-    public DawaRoad(string id, string name)
+    public DawaRoad(string id, string name, string darStatus)
     {
         Id = id;
         Name = name;
+        DarStatus = darStatus;
     }
 }
