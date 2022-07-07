@@ -27,9 +27,9 @@ public class DawaClientTest
         var accessAddresses = new List<DawaAccessAddress>();
         await foreach (var accessAddress in client.GetAllAccessAddresses(transaction.Id))
         {
-            // We only want to test on the first 1000
+            // We only want to test on the first 10000
             // otherwise it would take too long.
-            if (accessAddresses.Count == 1000)
+            if (accessAddresses.Count == 10000)
             {
                 break;
             }
@@ -39,7 +39,7 @@ public class DawaClientTest
 
         accessAddresses
             .Should()
-            .HaveCount(1000);
+            .HaveCount(10000);
 
         accessAddresses.Select(x => x.Id)
             .Should()
@@ -54,6 +54,10 @@ public class DawaClientTest
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
         accessAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        accessAddresses.Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
@@ -90,9 +94,9 @@ public class DawaClientTest
         var unitAddresses = new List<DawaUnitAddress>();
         await foreach (var accessAddress in client.GetAllUnitAddresses(transaction.Id))
         {
-            // We only want to test on the first 1000
+            // We only want to test on the first 10000
             // otherwise it would take too long.
-            if (unitAddresses.Count == 1000)
+            if (unitAddresses.Count == 10000)
             {
                 break;
             }
@@ -102,13 +106,17 @@ public class DawaClientTest
 
         unitAddresses
             .Should()
-            .HaveCount(1000);
+            .HaveCount(10000);
 
         unitAddresses.Select(x => x.Id)
             .Should()
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
         unitAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        unitAddresses.Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
