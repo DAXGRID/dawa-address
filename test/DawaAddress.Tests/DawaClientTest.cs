@@ -62,6 +62,10 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
+        accessAddresses.Select(x => x.PostDistrictCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
         accessAddresses.Select(x => x.NorthCoordinate)
             .Should()
             .AllSatisfy(x => x.Should().BeGreaterThan(0));
