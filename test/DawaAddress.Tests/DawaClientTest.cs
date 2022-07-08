@@ -79,7 +79,7 @@ public class DawaClientTest
             .Should()
             .HaveCountGreaterThan(0);
 
-        accessAddresses.Select(x => x.TownName).Where(x => !string.IsNullOrWhiteSpace(x))
+        accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
             .Should()
             .HaveCountGreaterThan(0);
     }

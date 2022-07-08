@@ -28,7 +28,7 @@ public record DawaAccessAddress
     [JsonPropertyName("adressepunktændringsdato")]
     public DateTime? LocationUpdated { get; init; }
     [JsonPropertyName("supplerendebynavn")]
-    public string? TownName { get; init; }
+    public string? SupplementaryTownName { get; init; }
     [JsonPropertyName("matrikelnr")]
     public string? PlotId { get; init; }
     [JsonPropertyName("navngivenvej_id")]
@@ -47,7 +47,7 @@ public record DawaAccessAddress
         double eastCoordinate,
         double northCoordinate,
         DateTime? locationUpdated,
-        string? townName,
+        string? supplementaryTownName,
         string? plotId,
         Guid roadId)
     {
@@ -66,7 +66,7 @@ public record DawaAccessAddress
         EastCoordinate = eastCoordinate;
         NorthCoordinate = northCoordinate;
         LocationUpdated = locationUpdated;
-        TownName = townName;
+        SupplementaryTownName = supplementaryTownName;
         PlotId = plotId;
         RoadId = roadId;
         Status = status;
