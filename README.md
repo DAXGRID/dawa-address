@@ -50,7 +50,7 @@ var client = new DawaClient(httpClient);
 
 var transaction = await client.GetLatestTransactionAsync();
 
-await foreach (var accessAddress in client.GetRoadsAsync(transaction.Id))
+await foreach (var accessAddress in client.GetAllRoadsAsync(transaction.Id))
 {
     // Do your logic here
 }
@@ -64,7 +64,7 @@ var client = new DawaClient(httpClient);
 
 var transaction = await client.GetLatestTransactionAsync();
 
-await foreach (var postCode in client.GetPostCodesAsync(transaction.Id))
+await foreach (var postCode in client.GetAllPostCodesAsync(transaction.Id))
 {
     // Do your logic here
 }

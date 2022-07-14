@@ -97,7 +97,7 @@ public class DawaClient
         }
     }
 
-    public async IAsyncEnumerable<DawaRoad> GetRoadsAsync(ulong tId)
+    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(ulong tId)
     {
         var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");
 
@@ -111,7 +111,7 @@ public class DawaClient
         }
     }
 
-    public async IAsyncEnumerable<DawaPostCode> GetPostCodesAsync(ulong tId)
+    public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(ulong tId)
     {
         var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=postnummer&txid={tId}");
 

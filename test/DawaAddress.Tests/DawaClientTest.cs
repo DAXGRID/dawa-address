@@ -191,7 +191,7 @@ public class DawaClientTest
     }
 
     [Fact]
-    public async Task Get_roads()
+    public async Task Get_all_roads()
     {
         var httpClient = new HttpClient();
         var client = new DawaClient(httpClient);
@@ -199,7 +199,7 @@ public class DawaClientTest
         var transaction = await client.GetLatestTransactionAsync();
 
         var result = new List<DawaRoad>();
-        await foreach (var road in client.GetRoadsAsync(transaction.Id))
+        await foreach (var road in client.GetAllRoadsAsync(transaction.Id))
         {
             // We do
             if (result.Count == 1000)
@@ -245,7 +245,7 @@ public class DawaClientTest
     }
 
     [Fact]
-    public async Task Get_post_codes()
+    public async Task Get_all_post_codes()
     {
         var httpClient = new HttpClient();
         var client = new DawaClient(httpClient);
@@ -253,7 +253,7 @@ public class DawaClientTest
         var transaction = await client.GetLatestTransactionAsync();
 
         var result = new List<DawaPostCode>();
-        await foreach (var road in client.GetPostCodesAsync(transaction.Id))
+        await foreach (var road in client.GetAllPostCodesAsync(transaction.Id))
         {
             if (result.Count == 1000)
             {
@@ -261,7 +261,6 @@ public class DawaClientTest
             }
 
             result.Add(road);
-
         }
 
         result.Should().HaveCount(1000);
