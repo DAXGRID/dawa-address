@@ -211,7 +211,7 @@ public class DawaClientTest
         }
 
         result.Should().HaveCount(1000);
-        result.Select(x => x.Id.Should().NotBeNullOrWhiteSpace());
+        result.Select(x => x.Id.Should().NotBeEmpty());
         result.Select(x => x.Name.Should().NotBeNullOrWhiteSpace());
         result.Select(x => x.DarStatus).Should().AllSatisfy(x => x.Should().NotBeNullOrEmpty());
     }
