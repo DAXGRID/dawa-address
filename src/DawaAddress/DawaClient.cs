@@ -35,7 +35,7 @@ public class DawaClient
         using var streamReader = new StreamReader(stream);
 
         string? line = null;
-        while ((line = await streamReader.ReadLineAsync().ConfigureAwait(false)) is not null)
+        while ((line = await streamReader.ReadLineAsync().WaitAsync(cancellationToken).ConfigureAwait(false)) is not null)
         {
             yield return JsonSerializer.Deserialize<DawaAccessAddress>(line)
                 ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
@@ -53,10 +53,48 @@ public class DawaClient
         using var streamReader = new StreamReader(stream);
 
         string? line = null;
-        while ((line = await streamReader.ReadLineAsync().ConfigureAwait(false)) is not null)
+        while ((line = await streamReader.ReadLineAsync().WaitAsync(cancellationToken).ConfigureAwait(false)) is not null)
         {
             yield return JsonSerializer.Deserialize<DawaUnitAddress>(line)
                 ?? throw new DawaEmptyResultException("Retrieved empty value from DAWA.");
+        }
+    }
+
+    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
+        ulong tId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");
+
+        using var response = await _httpClient.GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+        var roadsAsyncEnumerable = JsonSerializer
+            .DeserializeAsyncEnumerable<DawaRoad>(stream, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        await foreach (var road in roadsAsyncEnumerable)
+        {
+            yield return road ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
+        }
+    }
+
+    public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
+        ulong tId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=postnummer&txid={tId}");
+
+        using var response = await _httpClient.GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+        var postCodesAsyncEnumerable = JsonSerializer
+            .DeserializeAsyncEnumerable<DawaPostCode>(stream, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        await foreach (var postCode in postCodesAsyncEnumerable)
+        {
+            yield return postCode ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
         }
     }
 
@@ -117,44 +155,6 @@ public class DawaClient
         await foreach (var road in changesAsyncEnumerable)
         {
             yield return road ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
-        }
-    }
-
-    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
-        ulong tId,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=navngivenvej&txid={tId}");
-
-        using var response = await _httpClient.GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-
-        var roadsAsyncEnumerable = JsonSerializer
-            .DeserializeAsyncEnumerable<DawaRoad>(stream, null, cancellationToken)
-            .ConfigureAwait(false);
-
-        await foreach (var road in roadsAsyncEnumerable)
-        {
-            yield return road ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
-        }
-    }
-
-    public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
-        ulong tId,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var postNumberUrl = new Uri($"{_baseAddress}/udtraek?entitet=postnummer&txid={tId}");
-
-        using var response = await _httpClient.GetAsync(postNumberUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-
-        var postCodesAsyncEnumerable = JsonSerializer
-            .DeserializeAsyncEnumerable<DawaPostCode>(stream, null, cancellationToken)
-            .ConfigureAwait(false);
-
-        await foreach (var postCode in postCodesAsyncEnumerable)
-        {
-            yield return postCode ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
         }
     }
 
