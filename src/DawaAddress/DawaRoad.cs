@@ -1,6 +1,15 @@
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace DawaAddress;
+
+public enum DawaRoadStatus
+{
+    [EnumMember(Value = "foreløbig")]
+    Temporary,
+    [EnumMember(Value = "gældende")]
+    Effective,
+}
 
 public record DawaRoad
 {
@@ -8,13 +17,14 @@ public record DawaRoad
     public Guid Id { get; init; }
     [JsonPropertyName("navn")]
     public string Name { get; init; }
+    [JsonConverter(typeof(JsonStringEnumConverter<DawaRoadStatus>))]
     [JsonPropertyName("darstatus")]
-    public string DarStatus { get; init; }
+    public DawaRoadStatus Status { get; init; }
 
-    public DawaRoad(Guid id, string name, string darStatus)
+    public DawaRoad(Guid id, string name, DawaRoadStatus status)
     {
         Id = id;
         Name = name;
-        DarStatus = darStatus;
+        Status = status;
     }
 }
