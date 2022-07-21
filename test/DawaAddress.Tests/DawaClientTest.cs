@@ -121,10 +121,6 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
-        unitAddresses.Select(x => x.Status)
-            .Should()
-            .AllSatisfy(x => x.Should().NotBe(DawaStatus.None));
-
         unitAddresses.Select(x => x.FloorName).Where(x => !string.IsNullOrWhiteSpace(x))
             .Should()
             .HaveCountGreaterThan(0);

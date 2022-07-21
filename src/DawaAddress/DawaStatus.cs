@@ -2,10 +2,11 @@ using System.ComponentModel;
 
 namespace DawaAddress;
 
+// We disable CA1008 because it can be confusing to consumers to
+// have to check for None, since that is invalid.
+#pragma warning disable CA1008
 public enum DawaStatus
 {
-    [Description("None")]
-    None = 0,
     [Description("Active")]
     Active = 1,
     [Description("Canceled")]
@@ -15,3 +16,4 @@ public enum DawaStatus
     [Description("Discontinued")]
     Discontinued = 4
 }
+#pragma warning restore CA1008

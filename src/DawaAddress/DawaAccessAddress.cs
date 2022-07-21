@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace DawaAddress;
@@ -51,11 +50,6 @@ public record DawaAccessAddress
         string? plotId,
         Guid roadId)
     {
-        if (status == DawaStatus.None)
-        {
-            throw new InvalidEnumArgumentException($"{nameof(DawaStatus)} is required.");
-        }
-
         Id = id;
         Created = created;
         Updated = updated;

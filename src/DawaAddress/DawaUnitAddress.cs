@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace DawaAddress;
@@ -30,11 +29,6 @@ public record DawaUnitAddress
         DateTime created,
         DateTime updated)
     {
-        if (status == DawaStatus.None)
-        {
-            throw new InvalidEnumArgumentException($"{nameof(DawaStatus)} is required.");
-        }
-
         Id = id;
         AccessAddressId = accessAddressId;
         Status = status;
