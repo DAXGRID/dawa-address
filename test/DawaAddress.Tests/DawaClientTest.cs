@@ -213,7 +213,12 @@ public class DawaClientTest
         result.Should().HaveCount(1000);
         result.Select(x => x.Id.Should().NotBeEmpty());
         result.Select(x => x.Name.Should().NotBeNullOrWhiteSpace());
-        result.Select(x => x.DarStatus).Should().AllSatisfy(x => x.Should().NotBeNullOrEmpty());
+        result
+            .Select(x => x.Status)
+            .Should()
+            .AllSatisfy(x => x
+                       .Should()
+                       .BeOneOf(DawaRoadStatus.Effective, DawaRoadStatus.Temporary));
     }
 
     [Fact]
@@ -238,10 +243,14 @@ public class DawaClientTest
         result.Should().HaveCountGreaterThan(0);
         result.Select(x => x.Id).Should().AllSatisfy(x => x.Should().BeGreaterThan(0));
         result.Select(x => x.Data).Should().AllSatisfy(x => x.Should().NotBeNull());
-
         result.Select(x => x.Data.Id).Should().AllSatisfy(x => x.Should().NotBeEmpty());
         result.Select(x => x.Data.Name).Should().AllSatisfy(x => x.Should().NotBeEmpty());
-        result.Select(x => x.Data.DarStatus).Should().AllSatisfy(x => x.Should().NotBeNullOrEmpty());
+        result
+            .Select(x => x.Data.Status)
+            .Should()
+            .AllSatisfy(x => x
+                        .Should()
+                        .BeOneOf(DawaRoadStatus.Effective, DawaRoadStatus.Temporary));
     }
 
     [Fact]
