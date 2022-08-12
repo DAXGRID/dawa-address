@@ -17,7 +17,7 @@ public record DawaUnitAddress
     [JsonPropertyName("oprettet")]
     public DateTime Created { get; init; }
     [JsonPropertyName("ændret")]
-    public DateTime? Updated { get; init; }
+    public DateTime Updated { get; init; }
 
     [JsonConstructor]
     public DawaUnitAddress(
@@ -27,7 +27,7 @@ public record DawaUnitAddress
         string? floorName,
         string? suitName,
         DateTime created,
-        DateTime? updated)
+        DateTime updated)
     {
         Id = id;
         AccessAddressId = accessAddressId;
