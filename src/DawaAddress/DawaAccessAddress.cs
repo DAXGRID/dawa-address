@@ -9,7 +9,7 @@ public record DawaAccessAddress
     [JsonPropertyName("oprettet")]
     public DateTime Created { get; init; }
     [JsonPropertyName("ændret")]
-    public DateTime Updated { get; init; }
+    public DateTime? Updated { get; init; }
     [JsonPropertyName("kommunekode")]
     public string MunicipalCode { get; init; }
     [JsonPropertyName("status")]
@@ -37,7 +37,7 @@ public record DawaAccessAddress
     public DawaAccessAddress(
         Guid id,
         DateTime created,
-        DateTime updated,
+        DateTime? updated,
         string municipalCode,
         DawaStatus status,
         string roadCode,
