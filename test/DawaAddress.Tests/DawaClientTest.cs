@@ -54,7 +54,9 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
-        accessAddresses.Select(x => x.Updated)
+        accessAddresses
+            .Where(x => x.Updated is not null)
+            .Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
@@ -117,7 +119,9 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
-        unitAddresses.Select(x => x.Updated)
+        unitAddresses
+            .Where(x => x.Updated is not null)
+            .Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new()));
 
