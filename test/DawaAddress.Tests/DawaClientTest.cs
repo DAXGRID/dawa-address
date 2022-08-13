@@ -211,6 +211,8 @@ public class DawaClientTest
         result.Should().HaveCount(1000);
         result.Select(x => x.Id.Should().NotBeEmpty());
         result.Select(x => x.Name.Should().NotBeNullOrWhiteSpace());
+        result.Select(x => x.Created.Should().BeAfter(new()));
+        result.Select(x => x.Updated.Should().BeAfter(new()));
         result
             .Select(x => x.Status)
             .Should()
@@ -243,6 +245,10 @@ public class DawaClientTest
         result.Select(x => x.Data).Should().AllSatisfy(x => x.Should().NotBeNull());
         result.Select(x => x.Data.Id).Should().AllSatisfy(x => x.Should().NotBeEmpty());
         result.Select(x => x.Data.Name).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+        result.Select(x => x.Data.Created)
+            .Should().AllSatisfy(x => x.Should().BeAfter(default));
+        result.Select(x => x.Data.Updated)
+            .Should().AllSatisfy(x => x.Should().BeAfter(default));
         result
             .Select(x => x.Data.Status)
             .Should()
