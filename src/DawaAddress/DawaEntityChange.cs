@@ -39,14 +39,22 @@ public record DawaEntityChange<T>
     [JsonConverter(typeof(DawaEntityChangeOperationConverter))]
     public DawaEntityChangeOperation Operation { get; init; }
 
+    [JsonPropertyName("tidspunkt")]
+    public DateTime ChangeTime { get; init; }
+
     [JsonPropertyName("data")]
     public T Data { get; init; }
 
     [JsonConstructor]
-    public DawaEntityChange(ulong id, DawaEntityChangeOperation operation, T data)
+    public DawaEntityChange(
+        ulong id,
+        DawaEntityChangeOperation operation,
+        DateTime changeTime,
+        T data)
     {
         Id = id;
         Operation = operation;
+        ChangeTime = changeTime;
         Data = data;
     }
 }
