@@ -6,6 +6,7 @@ public record DawaPostCode
 {
     [JsonPropertyName("nr")]
     public string Number { get; init; }
+
     [JsonPropertyName("navn")]
     public string Name { get; init; }
 
