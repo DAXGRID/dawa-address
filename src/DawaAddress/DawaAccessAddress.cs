@@ -6,30 +6,43 @@ public record DawaAccessAddress
 {
     [JsonPropertyName("id")]
     public Guid Id { get; init; }
+
     [JsonPropertyName("oprettet")]
     public DateTime Created { get; init; }
+
     [JsonPropertyName("ændret")]
     public DateTime Updated { get; init; }
+
     [JsonPropertyName("kommunekode")]
     public string MunicipalCode { get; init; }
+
     [JsonPropertyName("status")]
     public DawaStatus Status { get; init; }
+
     [JsonPropertyName("vejkode")]
     public string RoadCode { get; init; }
+
     [JsonPropertyName("husnr")]
     public string HouseNumber { get; init; }
+
     [JsonPropertyName("postnr")]
     public string PostDistrictCode { get; init; }
+
     [JsonPropertyName("etrs89koordinat_øst")]
     public double EastCoordinate { get; init; }
+
     [JsonPropertyName("etrs89koordinat_nord")]
     public double NorthCoordinate { get; init; }
+
     [JsonPropertyName("adressepunktændringsdato")]
     public DateTime? LocationUpdated { get; init; }
+
     [JsonPropertyName("supplerendebynavn")]
     public string? SupplementaryTownName { get; init; }
+
     [JsonPropertyName("matrikelnr")]
     public string? PlotId { get; init; }
+
     [JsonPropertyName("navngivenvej_id")]
     public Guid RoadId { get; init; }
 
