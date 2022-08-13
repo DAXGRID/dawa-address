@@ -10,6 +10,7 @@ public record DawaPostCode
     [JsonPropertyName("navn")]
     public string Name { get; init; }
 
+    [JsonConstructor]
     public DawaPostCode(string name, string number)
     {
         if (string.IsNullOrWhiteSpace(name))
