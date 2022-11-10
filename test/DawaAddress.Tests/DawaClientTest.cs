@@ -313,4 +313,58 @@ public class DawaClientTest
         result.Select(x => x.Data.Name).Should().AllSatisfy(x => x.Should().NotBeEmpty());
         result.Select(x => x.Data.Number).Should().AllSatisfy(x => x.Should().NotBeNullOrWhiteSpace());
     }
+
+    [Fact]
+    public async Task Get_all_named_road_municipal_districts()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+
+        var result = new List<NamedRoadMunicipalDistrict>();
+        await foreach (var road in client.GetAllNamedRoadMunicipalDistrictsAsync(transaction.Id))
+        {
+            // We do
+            if (result.Count == 1000)
+            {
+                break;
+            }
+
+            result.Add(road);
+        }
+
+        result.Should().HaveCount(1000);
+        result.Select(x => x.Id.Should().NotBeEmpty());
+        result.Select(x => x.MunicipalityCode.Should().NotBeNullOrWhiteSpace());
+        result.Select(x => x.NamedRoadId.Should().NotBeEmpty());
+    }
+
+    public async Task Get_named_municipal_districts_changes()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transaction = await client.GetLatestTransactionAsync();
+
+        var result = new List<DawaEntityChange<NamedRoadMunicipalDistrict>>();
+        await foreach (var change in client.GetChangesNamedRoadMunicipalDistrictAsync(0, transaction.Id))
+        {
+            if (result.Count == 1000)
+            {
+                break;
+            }
+
+            result.Add(change);
+        }
+
+        result.Should().HaveCountGreaterThan(0);
+        result.Select(x => x.Id).Should().AllSatisfy(x => x.Should().BeGreaterThan(0));
+        result.Select(x => x.Data).Should().AllSatisfy(x => x.Should().NotBeNull());
+        result.Select(x => x.ChangeTime).Should().AllSatisfy(x => x.Should().BeAfter(default));
+
+        // We just test a few of them since the mapping is already tested in the full import.
+        result.Select(x => x.Data.Id).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+        result.Select(x => x.Data.NamedRoadId).Should().AllSatisfy(x => x.Should().NotBeEmpty());
+    }
 }
