@@ -70,6 +70,21 @@ await foreach (var postCode in client.GetAllPostCodesAsync(transaction.Id))
 }
 ```
 
+## Get all named road municipal districts
+
+```c#
+var httpClient = new HttpClient();
+var client = new DawaClient(httpClient);
+
+var transaction = await client.GetLatestTransactionAsync();
+
+await foreach (var postCode in client.GetAllNamedRoadMunicipalDistrictAsync(transaction.Id))
+{
+    // Do your logic here
+}
+```
+
+
 ## Get access address changes
 
 ```C#
@@ -133,6 +148,23 @@ var fromTransactionId = transaction.Id - 1000;
 var toTransactionId = transaction.Id;
 
 await foreach (var change in client.GetChangesPostCodesAsync(fromTransactionId, toTransactionId))
+{
+    // Do your logic here
+}
+```
+
+## Get named road municipal district changes
+
+```C#
+var httpClient = new HttpClient();
+var client = new DawaClient(httpClient);
+
+var transaction = await client.GetLatestTransactionAsync();
+// You should use your own fromTransactionId here.
+var fromTransactionId = transaction.Id - 1000;
+var toTransactionId = transaction.Id;
+
+await foreach (var change in client.GetChangesNamedRoadMunicipalDistrictAsync(fromTransactionId, toTransactionId))
 {
     // Do your logic here
 }

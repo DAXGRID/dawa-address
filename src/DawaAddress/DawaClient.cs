@@ -68,6 +68,17 @@ public class DawaClient
         }
     }
 
+    public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
+        ulong tId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var uri = new Uri($"{_baseAddress}/udtraek?entitet=dar_navngivenvejkommunedel_aktuel&ndjson&txid={tId}");
+        await foreach (var dawaEntity in StreamDawaJsonLine<NamedRoadMunicipalDistrict>(uri, cancellationToken).ConfigureAwait(false))
+        {
+            yield return dawaEntity;
+        }
+    }
+
     public async IAsyncEnumerable<DawaEntityChange<DawaAccessAddress>> GetChangesAccessAddressAsync(
         ulong fromTransactionId,
         ulong toTransactionId,
@@ -111,6 +122,18 @@ public class DawaClient
     {
         var uri = new Uri(@$"{_baseAddress}/haendelser?entitet=postnummer&ndjson&txidfra={fromTransactionId}&txidtil={toTransactionId}");
         await foreach (var dawaEntity in StreamDawaJsonLine<DawaEntityChange<DawaPostCode>>(uri, cancellationToken).ConfigureAwait(false))
+        {
+            yield return dawaEntity;
+        }
+    }
+
+    public async IAsyncEnumerable<DawaEntityChange<NamedRoadMunicipalDistrict>> GetChangesNamedRoadMunicipalDistrictAsync(
+        ulong fromTransactionId,
+        ulong toTransactionId,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var uri = new Uri(@$"{_baseAddress}/haendelser?entitet=dar_navngivenvejkommunedel_aktuel&ndjson&txidfra={fromTransactionId}&txidtil={toTransactionId}");
+        await foreach (var dawaEntity in StreamDawaJsonLine<DawaEntityChange<NamedRoadMunicipalDistrict>>(uri, cancellationToken).ConfigureAwait(false))
         {
             yield return dawaEntity;
         }
