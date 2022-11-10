@@ -42,7 +42,7 @@ await foreach (var unitAddress in client.GetAllUnitAddresses(transaction.Id))
 }
 ```
 
-## Get roads
+## Get all roads
 
 ```c#
 var httpClient = new HttpClient();
@@ -56,7 +56,7 @@ await foreach (var accessAddress in client.GetAllRoadsAsync(transaction.Id))
 }
 ```
 
-## Get post codes
+## Get all post codes
 
 ```c#
 var httpClient = new HttpClient();
