@@ -14,6 +14,17 @@ public class DawaClientTest
     }
 
     [Fact]
+    public async Task Get_all_transactions_after_specfic_transaction_id()
+    {
+        var httpClient = new HttpClient();
+        var client = new DawaClient(httpClient);
+
+        var transactions = await client.GetAllTransactionsAfter(3958188);
+
+        transactions.Should().NotBeEmpty();
+    }
+
+    [Fact]
     public async Task Get_all_access_addresses()
     {
         var httpClient = new HttpClient();

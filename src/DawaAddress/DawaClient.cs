@@ -13,6 +13,19 @@ public class DawaClient
         _httpClient = httpClient;
     }
 
+    public async Task<List<DawaTransaction>> GetAllTransactionsAfter(ulong transactionId, CancellationToken cancellationToken = default)
+    {
+        // We increment the transactionId so we only get the transactions after that transaction id,
+        // Otherwise it would be included in the results.
+        var uri = new Uri($"{_baseAddress}/transaktioner?txidfra={transactionId + 1}");
+
+        using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+
+        return await JsonSerializer.DeserializeAsync<List<DawaTransaction>>(stream, options: null, cancellationToken).ConfigureAwait(false) ??
+            throw new DawaEmptyResultException("Retrieved empty result from DAWA.");
+    }
+
     public async Task<DawaTransaction> GetLatestTransactionAsync(CancellationToken cancellationToken = default)
     {
         var uri = new Uri($"{_baseAddress}/senestetransaktion");
