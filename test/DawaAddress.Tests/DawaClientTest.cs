@@ -297,6 +297,7 @@ public class DawaClientTest
         result.Select(x => x.Name).Should().NotBeNullOrEmpty();
     }
 
+    [Fact]
     public async Task Get_post_codes_changes()
     {
         var httpClient = new HttpClient();
@@ -351,6 +352,7 @@ public class DawaClientTest
         result.Select(x => x.NamedRoadId.Should().NotBeEmpty());
     }
 
+    [Fact]
     public async Task Get_named_municipal_districts_changes()
     {
         var httpClient = new HttpClient();
