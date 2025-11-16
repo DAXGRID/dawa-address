@@ -58,8 +58,7 @@ public class JsonStringEnumConverter<TEnum> : JsonConverter<TEnum>
         Utf8JsonWriter writer,
         TEnum value, JsonSerializerOptions options)
     {
-        if (writer is null)
-            throw new ArgumentNullException(nameof(writer));
+        ArgumentNullException.ThrowIfNull(writer);
 
         writer.WriteStringValue(_enumToString[value]);
     }
