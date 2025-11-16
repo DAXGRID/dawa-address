@@ -159,7 +159,7 @@ public class DawaClient
         using var streamReader = new StreamReader(stream);
 
         string? line = null;
-        while ((line = await streamReader.ReadLineAsync().WaitAsync(cancellationToken).ConfigureAwait(false)) is not null)
+        while ((line = await streamReader.ReadLineAsync(cancellationToken).ConfigureAwait(false)) is not null)
         {
             yield return JsonSerializer.Deserialize<T>(line)
                 ?? throw new DawaEmptyResultException("Received empty value from DAWA.");
