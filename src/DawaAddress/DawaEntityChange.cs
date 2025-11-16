@@ -39,6 +39,9 @@ public record DawaEntityChange<T>
     [JsonConverter(typeof(DawaEntityChangeOperationConverter))]
     public DawaEntityChangeOperation Operation { get; init; }
 
+    [JsonPropertyName("sekvensnummer")]
+    public ulong SequenceNumber { get; init; }
+
     [JsonPropertyName("tidspunkt")]
     public DateTime ChangeTime { get; init; }
 
@@ -49,11 +52,13 @@ public record DawaEntityChange<T>
     public DawaEntityChange(
         ulong id,
         DawaEntityChangeOperation operation,
+        ulong sequenceNumber,
         DateTime changeTime,
         T data)
     {
         Id = id;
         Operation = operation;
+        SequenceNumber = sequenceNumber;
         ChangeTime = changeTime;
         Data = data;
     }
