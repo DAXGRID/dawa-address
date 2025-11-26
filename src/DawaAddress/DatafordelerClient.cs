@@ -2,6 +2,8 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using NetTopologySuite.Geometries;
+using NetTopologySuite.IO;
 
 namespace DawaAddress;
 
@@ -15,14 +17,16 @@ public class DatafordelerClient
         _httpClient = httpClient;
     }
 
-    private static DawaAccessAddress Map(DatafordelerAccessAddress datafordelerAccessAddress)
+    private static DawaAccessAddress Map(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
     {
+        var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
+
         return new DawaAccessAddress
         {
             Created = datafordelerAccessAddress.RegistreringFra,
             Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
-            EastCoordinate = 0,
-            NorthCoordinate = 0,
+            EastCoordinate = point.X,
+            NorthCoordinate = point.Y,
             HouseNumber = datafordelerAccessAddress.Husnummertekst,
             LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
@@ -41,9 +45,11 @@ public class DatafordelerClient
     {
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
-        const int pageSize = 200;
+        const int pageSize = 5000;
         var page = 1;
         const int status = 3;
+
+        var wktReader = new WKTReader();
 
         while (true)
         {
@@ -63,7 +69,7 @@ public class DatafordelerClient
 
             foreach (var dawaAddress in dawaAccessAddresses)
             {
-                yield return Map(dawaAddress);
+                yield return Map(dawaAddress, wktReader);
             }
 
             page++;
@@ -88,7 +94,35 @@ public class DatafordelerClient
     //     ulong tId,
     //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
     // {
-    //     throw new NotImplementedException();
+    //     var fromDate = DateTime.MinValue;
+    //     var toDate = DateTime.UtcNow;
+    //     const int pageSize = 200;
+    //     var page = 1;
+    //     const int status = 3;
+
+    //     while (true)
+    //     {
+    //         var accessAddressResourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+    //         Console.WriteLine(accessAddressResourcePath);
+    //         var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
+
+    //         response.EnsureSuccessStatusCode();
+
+    //         var dawaAccessAddresses = await response.Content.ReadFromJsonAsync<DatafordelerAccessAddress[]>(cancellationToken).ConfigureAwait(false);
+
+    //         if (dawaAccessAddresses is null)
+    //         {
+    //             throw new InvalidOperationException(
+    //                 $"Received NULL when trying to get DAWA Access addresses from path: '{accessAddressResourcePath}'.");
+    //         }
+
+    //         foreach (var dawaAddress in dawaAccessAddresses)
+    //         {
+    //             yield return Map(dawaAddress);
+    //         }
+
+    //         page++;
+    //     }
     // }
 
     // public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
