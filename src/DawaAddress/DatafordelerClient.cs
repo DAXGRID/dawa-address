@@ -23,16 +23,16 @@ public class DatafordelerClient
             Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
             EastCoordinate = 0,
             NorthCoordinate = 0,
-            HouseNumber = "0",
-            LocationUpdated = null,
-            MunicipalCode = "0",
-            Updated = DateTime.UtcNow,
-            Status = DawaStatus.Active,
-            PlotId = "",
+            HouseNumber = datafordelerAccessAddress.Husnummertekst,
+            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
+            MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
+            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
             RoadCode = "",
-            PostDistrictCode = "",
-            RoadId = Guid.NewGuid(),
-            SupplementaryTownName = ""
+            Status = DawaStatus.Active,
+            PlotId = datafordelerAccessAddress.Jordstykke,
+            PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
+            RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
+            SupplementaryTownName = datafordelerAccessAddress.Sogneinddeling.Navn
         };
     }
 
@@ -140,6 +140,6 @@ public class DatafordelerClient
 
     private static Uri BuildResourcePath(string baseUrl, string entityType, DateTime daftTimestampFrom, DateTime daftTimestampTo, int pageSize, int page, int status)
     {
-        return new Uri($"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&MedDybde=FALSE&Format=JSON");
+        return new Uri($"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&MedDybde=TRUE&Format=JSON");
     }
 }

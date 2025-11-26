@@ -2,6 +2,15 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
+public class Adgangspunkt
+{
+    [JsonPropertyName("datafordelerOpdateringstid")]
+    public required DateTime DatafordelerOpdateringstid { get; set; }
+
+    [JsonPropertyName("position")]
+    public required string Position { get; set; }
+}
+
 public class Afstemningsområde
 {
     [JsonPropertyName("id")]
@@ -30,6 +39,9 @@ public class Postnummer
 {
     [JsonPropertyName("id_lokalId")]
     public required string IdLokalId { get; set; }
+
+    [JsonPropertyName("postnr")]
+    public required string Postnr { get; set; }
 }
 
 public class DatafordelerAccessAddress
@@ -105,11 +117,16 @@ public class DatafordelerAccessAddress
 
     [JsonPropertyName("postnummer")]
     public required Postnummer Postnummer { get; set; }
+
+    [JsonPropertyName("adgangspunkt")]
+    public required Adgangspunkt Adgangspunkt { get; set; }
 }
 
 public class Sogneinddeling
 {
     [JsonPropertyName("id")]
     public required string Id { get; set; }
-}
 
+    [JsonPropertyName("navn")]
+    public required string Navn { get; set; }
+}
