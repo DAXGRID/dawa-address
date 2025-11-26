@@ -27,7 +27,7 @@ public class DatafordelerClient
             LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
             Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
-            RoadCode = "",
+            RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
             Status = DawaStatus.Active,
             PlotId = datafordelerAccessAddress.Jordstykke,
             PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
