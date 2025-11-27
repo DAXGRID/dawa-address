@@ -40,6 +40,11 @@ public class DatafordelerClient
         };
     }
 
+    private static DawaPostCode Map(DatafordelerPostCode datafordelerPostCode)
+    {
+        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
+    }
+
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -72,6 +77,11 @@ public class DatafordelerClient
                 yield return Map(dawaAddress, wktReader);
             }
 
+            if (dawaAccessAddresses.Length < pageSize)
+            {
+                break;
+            }
+
             page++;
         }
     }
@@ -90,40 +100,44 @@ public class DatafordelerClient
     //     throw new NotImplementedException();
     // }
 
-    // public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
-    //     ulong tId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     var fromDate = DateTime.MinValue;
-    //     var toDate = DateTime.UtcNow;
-    //     const int pageSize = 200;
-    //     var page = 1;
-    //     const int status = 3;
+    public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var fromDate = DateTime.MinValue;
+        var toDate = DateTime.UtcNow;
+        const int pageSize = 200;
+        var page = 1;
+        const int status = 3;
 
-    //     while (true)
-    //     {
-    //         var accessAddressResourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-    //         Console.WriteLine(accessAddressResourcePath);
-    //         var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
+        while (true)
+        {
+            var accessAddressResourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+            Console.WriteLine(accessAddressResourcePath);
+            var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
 
-    //         response.EnsureSuccessStatusCode();
+            response.EnsureSuccessStatusCode();
 
-    //         var dawaAccessAddresses = await response.Content.ReadFromJsonAsync<DatafordelerAccessAddress[]>(cancellationToken).ConfigureAwait(false);
+            var datafordelerPostCodes = await response.Content.ReadFromJsonAsync<DatafordelerPostCode[]>(cancellationToken).ConfigureAwait(false);
 
-    //         if (dawaAccessAddresses is null)
-    //         {
-    //             throw new InvalidOperationException(
-    //                 $"Received NULL when trying to get DAWA Access addresses from path: '{accessAddressResourcePath}'.");
-    //         }
+            if (datafordelerPostCodes is null)
+            {
+                throw new InvalidOperationException(
+                    $"Received NULL when trying to get DAWA post codes from path: '{accessAddressResourcePath}'.");
+            }
 
-    //         foreach (var dawaAddress in dawaAccessAddresses)
-    //         {
-    //             yield return Map(dawaAddress);
-    //         }
+            foreach (var datafordelerPostCode in datafordelerPostCodes)
+            {
+                yield return Map(datafordelerPostCode);
+            }
 
-    //         page++;
-    //     }
-    // }
+            if (datafordelerPostCodes.Length < pageSize)
+            {
+                break;
+            }
+
+            page++;
+        }
+    }
 
     // public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
     //     ulong tId,
@@ -174,6 +188,6 @@ public class DatafordelerClient
 
     private static Uri BuildResourcePath(string baseUrl, string entityType, DateTime daftTimestampFrom, DateTime daftTimestampTo, int pageSize, int page, int status)
     {
-        return new Uri($"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&MedDybde=TRUE&Format=JSON");
+        return new Uri($"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&Format=JSON");
     }
 }

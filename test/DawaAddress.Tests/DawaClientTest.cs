@@ -3,7 +3,7 @@ namespace DawaAddress.Tests;
 public class DawaClientTest
 {
     [Fact]
-    public async Task Get_all_access_addresses()
+    public async Task Get_all_unit_addresses()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
@@ -68,5 +68,27 @@ public class DawaClientTest
         accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
             .Should()
             .HaveCountGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task Get_post_codes()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+
+        var postCodes = new List<DawaPostCode>();
+        await foreach (var postCode in client.GetAllPostCodesAsync())
+        {
+            postCodes.Add(postCode);
+
+            if (postCodes.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        postCodes
+             .Should()
+             .HaveCount(1000);
     }
 }
