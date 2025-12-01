@@ -45,6 +45,18 @@ public class DatafordelerClient
         return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
     }
 
+    private static DawaRoad Map(DatafordelerRoad datafordelerRoad)
+    {
+        return new DawaRoad
+        {
+            Id = Guid.Parse(datafordelerRoad.IdLokalId),
+            Created = datafordelerRoad.RegistreringFra,
+            Updated = datafordelerRoad.DatafordelerOpdateringstid,
+            Name = datafordelerRoad.Vejnavn,
+            Status = DawaRoadStatus.Effective
+        };
+    }
+
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
@@ -93,12 +105,49 @@ public class DatafordelerClient
     //     throw new NotImplementedException();
     // }
 
-    // public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
-    //     ulong tId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
+    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var fromDate = DateTime.MinValue;
+        var toDate = DateTime.UtcNow;
+        const int pageSize = 200;
+        var page = 1;
+        const int status = 3;
+
+        while (true)
+        {
+            var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+            Console.WriteLine(resourcePath);
+            var response = await _httpClient
+                .GetAsync(
+                    resourcePath,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var resources = await response.Content
+                .ReadFromJsonAsync<DatafordelerRoad[]>(cancellationToken).ConfigureAwait(false);
+
+            if (resources is null)
+            {
+                throw new InvalidOperationException(
+                    $"Received NULL when trying to get DAWA roads from path: '{resourcePath}'.");
+            }
+
+            foreach (var resource in resources)
+            {
+                yield return Map(resource);
+            }
+
+            if (resources.Length < pageSize)
+            {
+                break;
+            }
+
+            page++;
+        }
+    }
 
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken = default)

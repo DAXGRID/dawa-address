@@ -14,20 +14,22 @@ public enum DawaRoadStatus
 public record DawaRoad
 {
     [JsonPropertyName("id")]
-    public Guid Id { get; init; }
+    public required Guid Id { get; init; }
 
     [JsonPropertyName("navn")]
-    public string Name { get; init; }
+    public required string Name { get; init; }
 
     [JsonConverter(typeof(JsonStringEnumConverter<DawaRoadStatus>))]
     [JsonPropertyName("darstatus")]
-    public DawaRoadStatus Status { get; init; }
+    public required DawaRoadStatus Status { get; init; }
 
     [JsonPropertyName("oprettet")]
-    public DateTime Created { get; init; }
+    public required DateTime Created { get; init; }
 
     [JsonPropertyName("ændret")]
-    public DateTime Updated { get; init; }
+    public required DateTime Updated { get; init; }
+
+    public DawaRoad() {}
 
     [JsonConstructor]
     public DawaRoad(

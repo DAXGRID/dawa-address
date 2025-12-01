@@ -91,4 +91,26 @@ public class DawaClientTest
              .Should()
              .HaveCount(1000);
     }
+
+    [Fact]
+    public async Task Get_roads()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+
+        var resources = new List<DawaRoad>();
+        await foreach (var resource in client.GetAllRoadsAsync())
+        {
+            resources.Add(resource);
+
+            if (resources.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        resources
+             .Should()
+             .HaveCount(1000);
+    }
 }
