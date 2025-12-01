@@ -1,9 +1,9 @@
+using NetTopologySuite.Geometries;
+using NetTopologySuite.IO;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using NetTopologySuite.Geometries;
-using NetTopologySuite.IO;
 
 namespace DawaAddress;
 
@@ -71,7 +71,6 @@ public class DatafordelerClient
         while (true)
         {
             var accessAddressResourcePath = BuildResourcePath(_baseAddress, "Husnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            Console.WriteLine(accessAddressResourcePath);
             var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
@@ -99,10 +98,46 @@ public class DatafordelerClient
     }
 
     // public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
-    //     ulong tId,
     //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
     // {
-    //     throw new NotImplementedException();
+    //     var fromDate = DateTime.MinValue;
+    //     var toDate = DateTime.UtcNow;
+    //     const int pageSize = 200;
+    //     var page = 1;
+    //     const int status = 3;
+
+    //     while (true)
+    //     {
+    //         var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+    //         var response = await _httpClient
+    //             .GetAsync(
+    //                 resourcePath,
+    //                 cancellationToken)
+    //             .ConfigureAwait(false);
+
+    //         response.EnsureSuccessStatusCode();
+
+    //         var resources = await response.Content
+    //             .ReadFromJsonAsync<DatafordelerRoad[]>(cancellationToken).ConfigureAwait(false);
+
+    //         if (resources is null)
+    //         {
+    //             throw new InvalidOperationException(
+    //                 $"Received NULL when trying to get DAWA roads from path: '{resourcePath}'.");
+    //         }
+
+    //         foreach (var resource in resources)
+    //         {
+    //             yield return Map(resource);
+    //         }
+
+    //         if (resources.Length < pageSize)
+    //         {
+    //             break;
+    //         }
+
+    //         page++;
+    //     }
     // }
 
     public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
@@ -116,8 +151,8 @@ public class DatafordelerClient
 
         while (true)
         {
-            var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            Console.WriteLine(resourcePath);
+            var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, false);
+
             var response = await _httpClient
                 .GetAsync(
                     resourcePath,
@@ -161,7 +196,6 @@ public class DatafordelerClient
         while (true)
         {
             var accessAddressResourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            Console.WriteLine(accessAddressResourcePath);
             var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
@@ -235,8 +269,23 @@ public class DatafordelerClient
     //     throw new NotImplementedException();
     // }
 
-    private static Uri BuildResourcePath(string baseUrl, string entityType, DateTime daftTimestampFrom, DateTime daftTimestampTo, int pageSize, int page, int status)
+    private static Uri BuildResourcePath(
+        string baseUrl,
+        string entityType,
+        DateTime daftTimestampFrom,
+        DateTime daftTimestampTo,
+        int pageSize,
+        int page,
+        int status,
+        bool includeNestedData = true)
     {
-        return new Uri($"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&Format=JSON");
+        var uri = $"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&Format=JSON";
+
+        if (!includeNestedData)
+        {
+            uri += "&meddybde=false";
+        }
+
+        return new Uri(uri);
     }
 }

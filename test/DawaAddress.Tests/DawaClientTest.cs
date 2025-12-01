@@ -133,4 +133,26 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
+
+    // [Fact]
+    // public async Task Get_unit_addresses()
+    // {
+    //     var httpClient = new HttpClient();
+    //     var client = new DatafordelerClient(httpClient);
+
+    //     var resources = new List<DawaUnitAddress>();
+    //     await foreach (var resource in client.GetAllUnitAddresses())
+    //     {
+    //         resources.Add(resource);
+
+    //         if (resources.Count == 1000)
+    //         {
+    //             break;
+    //         }
+    //     }
+
+    //     resources
+    //          .Should()
+    //          .HaveCount(1000);
+    // }
 }
