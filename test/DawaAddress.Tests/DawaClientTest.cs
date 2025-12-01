@@ -90,6 +90,14 @@ public class DawaClientTest
         postCodes
              .Should()
              .HaveCount(1000);
+
+        postCodes.Select(x => x.Number)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        postCodes.Select(x => x.Name)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
     }
 
     [Fact]
@@ -112,5 +120,17 @@ public class DawaClientTest
         resources
              .Should()
              .HaveCount(1000);
+
+        resources.Select(x => x.Name)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 }
