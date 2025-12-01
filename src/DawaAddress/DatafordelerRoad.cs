@@ -18,7 +18,4 @@ public class DatafordelerRoad
 
     [JsonPropertyName("vejnavn")]
     public required string Vejnavn { get; set; }
-
-    [JsonPropertyName("virkningFra")]
-    public required DateTime VirkningFra { get; set; }
 }
