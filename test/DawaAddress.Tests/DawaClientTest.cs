@@ -92,6 +92,14 @@ public class DawaClientTest
         unitAddresses
             .Should()
             .HaveCount(10000);
+
+        unitAddresses.Select(x => x.AccessAddressId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        unitAddresses.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
     }
 
     [Fact]
