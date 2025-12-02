@@ -10,8 +10,8 @@ public class DatafordelerRoad
     [JsonPropertyName("id_lokalId")]
     public required string IdLokalId { get; set; }
 
-    [JsonPropertyName("registreringFra")]
-    public required DateTime RegistreringFra { get; set; }
+    [JsonPropertyName("virkningFra")]
+    public required DateTime VirkningFra { get; set; }
 
     [JsonPropertyName("status")]
     public required string Status { get; set; }

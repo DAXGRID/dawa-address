@@ -23,7 +23,7 @@ public class DatafordelerClient
 
         return new DawaAccessAddress
         {
-            Created = datafordelerAccessAddress.RegistreringFra,
+            Created = datafordelerAccessAddress.VirkningFra,
             Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
@@ -50,7 +50,7 @@ public class DatafordelerClient
         return new DawaRoad
         {
             Id = Guid.Parse(datafordelerRoad.IdLokalId),
-            Created = datafordelerRoad.RegistreringFra,
+            Created = datafordelerRoad.VirkningFra,
             Updated = datafordelerRoad.DatafordelerOpdateringstid,
             Name = datafordelerRoad.Vejnavn,
             Status = DawaRoadStatus.Effective
