@@ -17,51 +17,11 @@ public class DatafordelerClient
         _httpClient = httpClient;
     }
 
-    private static DawaAccessAddress Map(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
-    {
-        var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
-
-        return new DawaAccessAddress
-        {
-            Created = datafordelerAccessAddress.VirkningFra,
-            Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
-            EastCoordinate = point.X,
-            NorthCoordinate = point.Y,
-            HouseNumber = datafordelerAccessAddress.Husnummertekst,
-            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
-            MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
-            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
-            RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
-            Status = DawaStatus.Active,
-            PlotId = datafordelerAccessAddress.Jordstykke,
-            PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
-            RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
-            SupplementaryTownName = datafordelerAccessAddress.Sogneinddeling.Navn
-        };
-    }
-
-    private static DawaPostCode Map(DatafordelerPostCode datafordelerPostCode)
-    {
-        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
-    }
-
-    private static DawaRoad Map(DatafordelerRoad datafordelerRoad)
-    {
-        return new DawaRoad
-        {
-            Id = Guid.Parse(datafordelerRoad.IdLokalId),
-            Created = datafordelerRoad.VirkningFra,
-            Updated = datafordelerRoad.DatafordelerOpdateringstid,
-            Name = datafordelerRoad.Vejnavn,
-            Status = DawaRoadStatus.Effective
-        };
-    }
-
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
+        DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fromDate = DateTime.MinValue;
-        var toDate = DateTime.UtcNow;
         const int pageSize = 5000;
         var page = 1;
         const int status = 3;
@@ -97,54 +57,54 @@ public class DatafordelerClient
         }
     }
 
-    // public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     var fromDate = DateTime.MinValue;
-    //     var toDate = DateTime.UtcNow;
-    //     const int pageSize = 200;
-    //     var page = 1;
-    //     const int status = 3;
-
-    //     while (true)
-    //     {
-    //         var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-    //         var response = await _httpClient
-    //             .GetAsync(
-    //                 resourcePath,
-    //                 cancellationToken)
-    //             .ConfigureAwait(false);
-
-    //         response.EnsureSuccessStatusCode();
-
-    //         var resources = await response.Content
-    //             .ReadFromJsonAsync<DatafordelerRoad[]>(cancellationToken).ConfigureAwait(false);
-
-    //         if (resources is null)
-    //         {
-    //             throw new InvalidOperationException(
-    //                 $"Received NULL when trying to get DAWA roads from path: '{resourcePath}'.");
-    //         }
-
-    //         foreach (var resource in resources)
-    //         {
-    //             yield return Map(resource);
-    //         }
-
-    //         if (resources.Length < pageSize)
-    //         {
-    //             break;
-    //         }
-
-    //         page++;
-    //     }
-    // }
-
-    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
+    public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
+        DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fromDate = DateTime.MinValue;
-        var toDate = DateTime.UtcNow;
+        const int pageSize = 200;
+        var page = 1;
+        const int status = 3;
+
+        while (true)
+        {
+            var resourcePath = BuildResourcePath(_baseAddress, "Adresse", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+            var response = await _httpClient
+                .GetAsync(
+                    resourcePath,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var resources = await response.Content
+                .ReadFromJsonAsync<DatafordelerUnitAddress[]>(cancellationToken).ConfigureAwait(false);
+
+            if (resources is null)
+            {
+                throw new InvalidOperationException(
+                    $"Received NULL when trying to get DAWA unit address from path: '{resourcePath}'.");
+            }
+
+            foreach (var resource in resources)
+            {
+                yield return Map(resource);
+            }
+
+            if (resources.Length < pageSize)
+            {
+                break;
+            }
+
+            page++;
+        }
+    }
+
+    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
+        DateTime toDate,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var fromDate = DateTime.MinValue;
         const int pageSize = 200;
         var page = 1;
         const int status = 3;
@@ -185,18 +145,18 @@ public class DatafordelerClient
     }
 
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
+        DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fromDate = DateTime.MinValue;
-        var toDate = DateTime.UtcNow;
         const int pageSize = 200;
         var page = 1;
         const int status = 3;
 
         while (true)
         {
-            var accessAddressResourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
+            var resourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+            var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 
@@ -205,7 +165,7 @@ public class DatafordelerClient
             if (datafordelerPostCodes is null)
             {
                 throw new InvalidOperationException(
-                    $"Received NULL when trying to get DAWA post codes from path: '{accessAddressResourcePath}'.");
+                    $"Received NULL when trying to get DAWA post codes from path: '{resourcePath}'.");
             }
 
             foreach (var datafordelerPostCode in datafordelerPostCodes)
@@ -287,5 +247,59 @@ public class DatafordelerClient
         }
 
         return new Uri(uri);
+    }
+
+    private static DawaUnitAddress Map(DatafordelerUnitAddress datafordelerUnitAddress)
+    {
+        return new DawaUnitAddress
+        {
+            Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
+            AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer.IdLokalId),
+            Created = datafordelerUnitAddress.VirkningFra,
+            Updated = datafordelerUnitAddress.DatafordelerOpdateringstid,
+            FloorName = datafordelerUnitAddress.Etagebetegnelse,
+            Status = DawaStatus.Active,
+            SuitName = datafordelerUnitAddress.Drbetegnelse
+        };
+    }
+
+    private static DawaAccessAddress Map(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
+    {
+        var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
+
+        return new DawaAccessAddress
+        {
+            Created = datafordelerAccessAddress.VirkningFra,
+            Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
+            EastCoordinate = point.X,
+            NorthCoordinate = point.Y,
+            HouseNumber = datafordelerAccessAddress.Husnummertekst,
+            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
+            MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
+            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
+            RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
+            Status = DawaStatus.Active,
+            PlotId = datafordelerAccessAddress.Jordstykke,
+            PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
+            RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
+            SupplementaryTownName = datafordelerAccessAddress.Sogneinddeling.Navn
+        };
+    }
+
+    private static DawaPostCode Map(DatafordelerPostCode datafordelerPostCode)
+    {
+        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
+    }
+
+    private static DawaRoad Map(DatafordelerRoad datafordelerRoad)
+    {
+        return new DawaRoad
+        {
+            Id = Guid.Parse(datafordelerRoad.IdLokalId),
+            Created = datafordelerRoad.VirkningFra,
+            Updated = datafordelerRoad.DatafordelerOpdateringstid,
+            Name = datafordelerRoad.Vejnavn,
+            Status = DawaRoadStatus.Effective
+        };
     }
 }

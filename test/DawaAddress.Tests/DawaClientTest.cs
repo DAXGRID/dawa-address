@@ -3,13 +3,14 @@ namespace DawaAddress.Tests;
 public class DawaClientTest
 {
     [Fact]
-    public async Task Get_all_unit_addresses()
+    public async Task Get_all_access_addresses()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses())
+        await foreach (var accessAddress in client.GetAllAccessAddresses(toDate))
         {
             accessAddresses.Add(accessAddress);
 
@@ -71,13 +72,37 @@ public class DawaClientTest
     }
 
     [Fact]
+    public async Task Get_all_unit_addresses()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var toDate = DateTime.UtcNow;
+
+        var unitAddresses = new List<DawaUnitAddress>();
+        await foreach (var unitAddress in client.GetAllUnitAddresses(toDate))
+        {
+            unitAddresses.Add(unitAddress);
+
+            if (unitAddresses.Count == 10000)
+            {
+                break;
+            }
+        }
+
+        unitAddresses
+            .Should()
+            .HaveCount(10000);
+    }
+
+    [Fact]
     public async Task Get_post_codes()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var toDate = DateTime.UtcNow;
 
         var postCodes = new List<DawaPostCode>();
-        await foreach (var postCode in client.GetAllPostCodesAsync())
+        await foreach (var postCode in client.GetAllPostCodesAsync(toDate))
         {
             postCodes.Add(postCode);
 
@@ -105,9 +130,10 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var toDate = DateTime.UtcNow;
 
         var resources = new List<DawaRoad>();
-        await foreach (var resource in client.GetAllRoadsAsync())
+        await foreach (var resource in client.GetAllRoadsAsync(toDate))
         {
             resources.Add(resource);
 
@@ -133,26 +159,4 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
-
-    // [Fact]
-    // public async Task Get_unit_addresses()
-    // {
-    //     var httpClient = new HttpClient();
-    //     var client = new DatafordelerClient(httpClient);
-
-    //     var resources = new List<DawaUnitAddress>();
-    //     await foreach (var resource in client.GetAllUnitAddresses())
-    //     {
-    //         resources.Add(resource);
-
-    //         if (resources.Count == 1000)
-    //         {
-    //             break;
-    //         }
-    //     }
-
-    //     resources
-    //          .Should()
-    //          .HaveCount(1000);
-    // }
 }

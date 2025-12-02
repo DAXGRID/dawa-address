@@ -5,13 +5,13 @@ namespace DawaAddress;
 public record DawaUnitAddress
 {
     [JsonPropertyName("id")]
-    public Guid Id { get; init; }
+    public required Guid Id { get; init; }
 
     [JsonPropertyName("adgangsadresseid")]
-    public Guid AccessAddressId { get; init; }
+    public required Guid AccessAddressId { get; init; }
 
     [JsonPropertyName("status")]
-    public DawaStatus Status { get; init; }
+    public required DawaStatus Status { get; init; }
 
     [JsonPropertyName("etage")]
     public string? FloorName { get; init; }
@@ -20,10 +20,12 @@ public record DawaUnitAddress
     public string? SuitName { get; init; }
 
     [JsonPropertyName("oprettet")]
-    public DateTime Created { get; init; }
+    public required DateTime Created { get; init; }
 
     [JsonPropertyName("ændret")]
-    public DateTime Updated { get; init; }
+    public required DateTime Updated { get; init; }
+
+    public DawaUnitAddress() { }
 
     [JsonConstructor]
     public DawaUnitAddress(
