@@ -58,12 +58,15 @@ public class DatafordelerClient
         }
     }
 
-    // public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
-    //     ulong tId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
+    public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
+        DateTime toDate,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>("NavngivenvejKommunedel", DateTime.MinValue, toDate, false, MapNamedRoadMunicipalDistrict, cancellationToken).ConfigureAwait(false))
+        {
+            yield return x;
+        }
+    }
 
     // public async IAsyncEnumerable<DawaEntityChange<DawaAccessAddress>> GetChangesAccessAddressAsync(
     //     ulong fromTransactionId,
@@ -176,6 +179,18 @@ public class DatafordelerClient
             Updated = datafordelerRoad.DatafordelerOpdateringstid,
             Name = datafordelerRoad.Vejnavn,
             Status = DawaRoadStatus.Effective
+        };
+    }
+
+    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(DatafordelerNamedRoadMunicipalDistrict datafordelerNamedRoadMunicipalDistrict)
+    {
+        return new NamedRoadMunicipalDistrict
+        {
+            Id = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.IdLokalId),
+            Status = NamedRoadMunicipalDistrictStatus.Active,
+            MunicipalityCode = datafordelerNamedRoadMunicipalDistrict.Kommune,
+            NamedRoadId = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.NavngivenVej.IdLokalId),
+            RoadCode = datafordelerNamedRoadMunicipalDistrict.Vejkode
         };
     }
 

@@ -32,7 +32,7 @@ public enum NamedRoadMunicipalDistrictStatus
 public record NamedRoadMunicipalDistrict
 {
     [JsonPropertyName("id")]
-    public Guid Id { get; init; }
+    public required Guid Id { get; init; }
 
     [JsonPropertyName("kommune")]
     public string? MunicipalityCode { get; init; }
@@ -41,10 +41,12 @@ public record NamedRoadMunicipalDistrict
     public string? RoadCode { get; init; }
 
     [JsonPropertyName("status")]
-    public NamedRoadMunicipalDistrictStatus Status { get; init; }
+    public required NamedRoadMunicipalDistrictStatus Status { get; init; }
 
     [JsonPropertyName("navngivenvej_id")]
-    public Guid NamedRoadId { get; init; }
+    public required Guid NamedRoadId { get; init; }
+
+    public NamedRoadMunicipalDistrict() {}
 
     [JsonConstructor]
     public NamedRoadMunicipalDistrict(

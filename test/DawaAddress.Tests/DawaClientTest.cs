@@ -167,4 +167,43 @@ public class DawaClientTest
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
+
+    [Fact]
+    public async Task Get_named_road_municipal_districts()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var toDate = DateTime.UtcNow;
+
+        var namedRoadMunicipalDistricts = new List<NamedRoadMunicipalDistrict>();
+        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(toDate))
+        {
+            namedRoadMunicipalDistricts.Add(namedRoadMunicipalDistrict);
+
+            if (namedRoadMunicipalDistricts.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        namedRoadMunicipalDistricts
+             .Should()
+             .HaveCount(1000);
+
+        namedRoadMunicipalDistricts.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.RoadCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.MunicipalityCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.NamedRoadId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+    }
 }
