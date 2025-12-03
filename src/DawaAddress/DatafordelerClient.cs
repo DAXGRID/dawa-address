@@ -22,7 +22,7 @@ public class DatafordelerClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", DateTime.MinValue, toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
@@ -32,7 +32,7 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", toDate, true, MapUnitAddress, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", DateTime.MinValue, toDate, false, MapUnitAddress, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
@@ -42,7 +42,7 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", DateTime.MinValue, toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
@@ -52,49 +52,9 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", DateTime.MinValue, toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
-        }
-    }
-
-    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
-        string resourceName,
-        DateTime toDate,
-        bool includeNestedData,
-        Func<T1, T2> fMap,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var fromDate = DateTime.MinValue;
-        const int pageSize = 200;
-        var page = 1;
-        const int status = 3;
-
-        while (true)
-        {
-            var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
-            var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
-
-            response.EnsureSuccessStatusCode();
-
-            var resources = await response.Content.ReadFromJsonAsync<T1[]>(cancellationToken).ConfigureAwait(false);
-
-            if (resources is null)
-            {
-                throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
-            }
-
-            foreach (var resource in resources)
-            {
-                yield return fMap(resource);
-            }
-
-            if (resources.Length < pageSize)
-            {
-                break;
-            }
-
-            page++;
         }
     }
 
@@ -217,5 +177,45 @@ public class DatafordelerClient
             Name = datafordelerRoad.Vejnavn,
             Status = DawaRoadStatus.Effective
         };
+    }
+
+    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
+        string resourceName,
+        DateTime fromDate, 
+        DateTime toDate,
+        bool includeNestedData,
+        Func<T1, T2> fMap,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        const int pageSize = 200;
+        var page = 1;
+        const int status = 3;
+
+        while (true)
+        {
+            var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
+            var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var resources = await response.Content.ReadFromJsonAsync<T1[]>(cancellationToken).ConfigureAwait(false);
+
+            if (resources is null)
+            {
+                throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
+            }
+
+            foreach (var resource in resources)
+            {
+                yield return fMap(resource);
+            }
+
+            if (resources.Length < pageSize)
+            {
+                break;
+            }
+
+            page++;
+        }
     }
 }
