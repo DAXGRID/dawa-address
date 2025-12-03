@@ -18,95 +18,60 @@ public class DatafordelerClient
     }
 
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
+        DateTime fromDate,
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", DateTime.MinValue, toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", fromDate, toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
     }
 
     public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
+        DateTime fromDate,
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", DateTime.MinValue, toDate, false, MapUnitAddress, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", fromDate, toDate, false, MapUnitAddress, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
     }
 
     public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
+        DateTime fromDate,
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", DateTime.MinValue, toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", fromDate, toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
     }
 
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
+        DateTime fromDate,
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", DateTime.MinValue, toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", fromDate, toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
     }
 
     public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
+        DateTime fromDate,
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>("NavngivenvejKommunedel", DateTime.MinValue, toDate, false, MapNamedRoadMunicipalDistrict, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>("NavngivenvejKommunedel", fromDate, toDate, false, MapNamedRoadMunicipalDistrict, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
         }
     }
-
-    // public async IAsyncEnumerable<DawaEntityChange<DawaAccessAddress>> GetChangesAccessAddressAsync(
-    //     ulong fromTransactionId,
-    //     ulong toTransactionId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
-    // public async IAsyncEnumerable<DawaEntityChange<DawaUnitAddress>> GetChangesUnitAddressAsync(
-    //     ulong fromTransactionId,
-    //     ulong toTransactionId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
-    // public async IAsyncEnumerable<DawaEntityChange<DawaRoad>> GetChangesRoadsAsync(
-    //     ulong fromTransactionId,
-    //     ulong toTransactionId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
-    // public async IAsyncEnumerable<DawaEntityChange<DawaPostCode>> GetChangesPostCodesAsync(
-    //     ulong fromTransactionId,
-    //     ulong toTransactionId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-
-    // public async IAsyncEnumerable<DawaEntityChange<NamedRoadMunicipalDistrict>> GetChangesNamedRoadMunicipalDistrictAsync(
-    //     ulong fromTransactionId,
-    //     ulong toTransactionId,
-    //     [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
 
     private static Uri BuildResourcePath(
         string baseUrl,

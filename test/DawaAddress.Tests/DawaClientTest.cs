@@ -7,10 +7,11 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(toDate))
+        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate))
         {
             accessAddresses.Add(accessAddress);
 
@@ -76,10 +77,11 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
         var unitAddresses = new List<DawaUnitAddress>();
-        await foreach (var unitAddress in client.GetAllUnitAddresses(toDate))
+        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate))
         {
             unitAddresses.Add(unitAddress);
 
@@ -107,10 +109,11 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
         var postCodes = new List<DawaPostCode>();
-        await foreach (var postCode in client.GetAllPostCodesAsync(toDate))
+        await foreach (var postCode in client.GetAllPostCodesAsync(fromDate, toDate))
         {
             postCodes.Add(postCode);
 
@@ -138,10 +141,11 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
         var resources = new List<DawaRoad>();
-        await foreach (var resource in client.GetAllRoadsAsync(toDate))
+        await foreach (var resource in client.GetAllRoadsAsync(fromDate, toDate))
         {
             resources.Add(resource);
 
@@ -173,10 +177,12 @@ public class DawaClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
+
+        var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
         var namedRoadMunicipalDistricts = new List<NamedRoadMunicipalDistrict>();
-        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(toDate))
+        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(fromDate, toDate))
         {
             namedRoadMunicipalDistricts.Add(namedRoadMunicipalDistrict);
 
