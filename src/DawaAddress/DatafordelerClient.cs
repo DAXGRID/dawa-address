@@ -22,8 +22,6 @@ public class DatafordelerClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-
-
         await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
         {
             yield return x;
