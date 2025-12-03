@@ -58,7 +58,12 @@ public class DatafordelerClient
         }
     }
 
-    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(string resourceName, DateTime toDate, bool includeNestedData, Func<T1, T2> fMap, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
+        string resourceName,
+        DateTime toDate,
+        bool includeNestedData,
+        Func<T1, T2> fMap,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fromDate = DateTime.MinValue;
         const int pageSize = 200;
