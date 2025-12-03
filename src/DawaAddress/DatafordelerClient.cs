@@ -21,39 +21,12 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var fromDate = DateTime.MinValue;
-        const int pageSize = 5000;
-        var page = 1;
-        const int status = 3;
-
         var wktReader = new WKTReader();
 
-        while (true)
+
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
         {
-            var accessAddressResourcePath = BuildResourcePath(_baseAddress, "Husnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            var response = await _httpClient.GetAsync(accessAddressResourcePath, cancellationToken).ConfigureAwait(false);
-
-            response.EnsureSuccessStatusCode();
-
-            var dawaAccessAddresses = await response.Content.ReadFromJsonAsync<DatafordelerAccessAddress[]>(cancellationToken).ConfigureAwait(false);
-
-            if (dawaAccessAddresses is null)
-            {
-                throw new InvalidOperationException(
-                    $"Received NULL when trying to get DAWA Access addresses from path: '{accessAddressResourcePath}'.");
-            }
-
-            foreach (var dawaAddress in dawaAccessAddresses)
-            {
-                yield return Map(dawaAddress, wktReader);
-            }
-
-            if (dawaAccessAddresses.Length < pageSize)
-            {
-                break;
-            }
-
-            page++;
+            yield return x;
         }
     }
 
@@ -61,42 +34,9 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var fromDate = DateTime.MinValue;
-        const int pageSize = 200;
-        var page = 1;
-        const int status = 3;
-
-        while (true)
+        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", toDate, true, MapUnitAddress, cancellationToken).ConfigureAwait(false))
         {
-            var resourcePath = BuildResourcePath(_baseAddress, "Adresse", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
-            var response = await _httpClient
-                .GetAsync(
-                    resourcePath,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            response.EnsureSuccessStatusCode();
-
-            var resources = await response.Content
-                .ReadFromJsonAsync<DatafordelerUnitAddress[]>(cancellationToken).ConfigureAwait(false);
-
-            if (resources is null)
-            {
-                throw new InvalidOperationException(
-                    $"Received NULL when trying to get DAWA unit address from path: '{resourcePath}'.");
-            }
-
-            foreach (var resource in resources)
-            {
-                yield return Map(resource);
-            }
-
-            if (resources.Length < pageSize)
-            {
-                break;
-            }
-
-            page++;
+            yield return x;
         }
     }
 
@@ -104,49 +44,23 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var fromDate = DateTime.MinValue;
-        const int pageSize = 200;
-        var page = 1;
-        const int status = 3;
-
-        while (true)
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
         {
-            var resourcePath = BuildResourcePath(_baseAddress, "Navngivenvej", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, false);
-
-            var response = await _httpClient
-                .GetAsync(
-                    resourcePath,
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            response.EnsureSuccessStatusCode();
-
-            var resources = await response.Content
-                .ReadFromJsonAsync<DatafordelerRoad[]>(cancellationToken).ConfigureAwait(false);
-
-            if (resources is null)
-            {
-                throw new InvalidOperationException(
-                    $"Received NULL when trying to get DAWA roads from path: '{resourcePath}'.");
-            }
-
-            foreach (var resource in resources)
-            {
-                yield return Map(resource);
-            }
-
-            if (resources.Length < pageSize)
-            {
-                break;
-            }
-
-            page++;
+            yield return x;
         }
     }
 
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
+        {
+            yield return x;
+        }
+    }
+
+    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(string resourceName, DateTime toDate, bool includeNestedData, Func<T1, T2> fMap, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fromDate = DateTime.MinValue;
         const int pageSize = 200;
@@ -155,25 +69,24 @@ public class DatafordelerClient
 
         while (true)
         {
-            var resourcePath = BuildResourcePath(_baseAddress, "postnummer", DateTime.MinValue, DateTime.UtcNow, pageSize, page, status);
+            var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
 
-            var datafordelerPostCodes = await response.Content.ReadFromJsonAsync<DatafordelerPostCode[]>(cancellationToken).ConfigureAwait(false);
+            var resources = await response.Content.ReadFromJsonAsync<T1[]>(cancellationToken).ConfigureAwait(false);
 
-            if (datafordelerPostCodes is null)
+            if (resources is null)
             {
-                throw new InvalidOperationException(
-                    $"Received NULL when trying to get DAWA post codes from path: '{resourcePath}'.");
+                throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
             }
 
-            foreach (var datafordelerPostCode in datafordelerPostCodes)
+            foreach (var resource in resources)
             {
-                yield return Map(datafordelerPostCode);
+                yield return fMap(resource);
             }
 
-            if (datafordelerPostCodes.Length < pageSize)
+            if (resources.Length < pageSize)
             {
                 break;
             }
@@ -249,7 +162,7 @@ public class DatafordelerClient
         return new Uri(uri);
     }
 
-    private static DawaUnitAddress Map(DatafordelerUnitAddress datafordelerUnitAddress)
+    private static DawaUnitAddress MapUnitAddress(DatafordelerUnitAddress datafordelerUnitAddress)
     {
         return new DawaUnitAddress
         {
@@ -263,7 +176,7 @@ public class DatafordelerClient
         };
     }
 
-    private static DawaAccessAddress Map(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
+    private static DawaAccessAddress MapAccessAddress(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
     {
         var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
 
@@ -286,12 +199,12 @@ public class DatafordelerClient
         };
     }
 
-    private static DawaPostCode Map(DatafordelerPostCode datafordelerPostCode)
+    private static DawaPostCode MapPostCode(DatafordelerPostCode datafordelerPostCode)
     {
         return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
     }
 
-    private static DawaRoad Map(DatafordelerRoad datafordelerRoad)
+    private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)
     {
         return new DawaRoad
         {
