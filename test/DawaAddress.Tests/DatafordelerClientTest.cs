@@ -1,6 +1,6 @@
 namespace DawaAddress.Tests;
 
-public class DawaClientTest
+public class DatafordelerClientTest
 {
     [Fact]
     public async Task Get_all_access_addresses()
