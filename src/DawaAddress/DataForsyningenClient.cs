@@ -3,12 +3,12 @@ using System.Text.Json;
 
 namespace DawaAddress;
 
-public class DawaClient
+public class DataForsyningenClient
 {
     private const string _baseAddress = "https://api.dataforsyningen.dk/replikering";
     private readonly HttpClient _httpClient;
 
-    public DawaClient(HttpClient httpClient)
+    public DataForsyningenClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }
