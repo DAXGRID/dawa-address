@@ -314,8 +314,6 @@ public class DatafordelerClient
             var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
-            Console.WriteLine(resourcePath);
-
             response.EnsureSuccessStatusCode();
 
             var resources = await response.Content.ReadFromJsonAsync<T1[]>(cancellationToken).ConfigureAwait(false);
