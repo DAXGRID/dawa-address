@@ -1,11 +1,69 @@
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
+using System.ComponentModel;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 namespace DawaAddress;
+
+// We disable CA1008 because it can be confusing to consumers to
+// have to check for None, since that is invalid.
+#pragma warning disable CA1008
+public enum DatafordelerAccessAddressStatus
+{
+    [Description("Foreløbige husnumre")]
+    Pending = 2,
+    [Description("Gældende husnumre")]
+    Active = 3,
+    [Description("Nedlagte husnumre")]
+    Discontinued = 4,
+    [Description("Henlagte husnumre")]
+    Canceled = 5
+}
+
+public enum DatafordelerUnitAddressStatus
+{
+    [Description("Foreløbige adresser")]
+    Pending = 2,
+    [Description("Gældende adresser")]
+    Active = 3,
+    [Description("Nedlagte adresser")]
+    Discontinued = 4,
+    [Description("Henlagte adresser")]
+    Canceled = 5
+}
+
+public enum DatafordelerPostCodeStatus
+{
+    [Description("Gældende postnummer")]
+    Active = 3,
+    [Description("Nedlagte nedlagt postnummer")]
+    Discontinued = 4,
+}
+
+public enum DatafordelerRoadStatus
+{
+    [Description("Foreløbige navngivne veje")]
+    Temporary = 2,
+    [Description("Gældende navngivne veje")]
+    Active = 3,
+    [Description("Nedlagte navngivne veje")]
+    Discontinued = 4,
+    [Description("Henlagte navngivne veje")]
+    Canceled = 5
+}
+
+public enum DatafordelerNamedRoadMunicipalDistrictStatus
+{
+    [Description("Gældende relation")]
+    Active = 3,
+    [Description("Nedlagt relation")]
+    Discontinued = 4,
+}
+
+#pragma warning restore CA1008
 
 public class DatafordelerClient
 {
@@ -20,10 +78,17 @@ public class DatafordelerClient
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
         DateTime fromDate,
         DateTime toDate,
+        DatafordelerAccessAddressStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>("Husnummer", fromDate, toDate, true, (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>(
+                           "Husnummer",
+                           fromDate,
+                           toDate,
+                           true,
+                           (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, (int?)status, cancellationToken)
+                       .ConfigureAwait(false))
         {
             yield return x;
         }
@@ -32,9 +97,17 @@ public class DatafordelerClient
     public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
         DateTime fromDate,
         DateTime toDate,
+        DatafordelerUnitAddressStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>("Adresse", fromDate, toDate, false, MapUnitAddress, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>(
+                           "Adresse",
+                           fromDate,
+                           toDate,
+                           false,
+                           MapUnitAddress,
+                           (int?)status, cancellationToken)
+                       .ConfigureAwait(false))
         {
             yield return x;
         }
@@ -43,9 +116,18 @@ public class DatafordelerClient
     public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(
         DateTime fromDate,
         DateTime toDate,
+        DatafordelerRoadStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>("Navngivenvej", fromDate, toDate, false, MapRoad, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>(
+                           "Navngivenvej",
+                           fromDate,
+                           toDate,
+                           false,
+                           MapRoad,
+                           (int?)status,
+                           cancellationToken)
+                       .ConfigureAwait(false))
         {
             yield return x;
         }
@@ -56,7 +138,15 @@ public class DatafordelerClient
         DateTime toDate,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>("postnummer", fromDate, toDate, true, MapPostCode, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>(
+                           "postnummer",
+                           fromDate,
+                           toDate,
+                           true,
+                           MapPostCode,
+                           null,
+                           cancellationToken)
+                       .ConfigureAwait(false))
         {
             yield return x;
         }
@@ -65,9 +155,18 @@ public class DatafordelerClient
     public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
         DateTime fromDate,
         DateTime toDate,
+        DatafordelerNamedRoadMunicipalDistrictStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>("NavngivenvejKommunedel", fromDate, toDate, false, MapNamedRoadMunicipalDistrict, cancellationToken).ConfigureAwait(false))
+        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>(
+                           "NavngivenvejKommunedel",
+                           fromDate,
+                           toDate,
+                           false,
+                           MapNamedRoadMunicipalDistrict,
+                           (int?)status,
+                           cancellationToken)
+                       .ConfigureAwait(false))
         {
             yield return x;
         }
@@ -80,14 +179,19 @@ public class DatafordelerClient
         DateTime daftTimestampTo,
         int pageSize,
         int page,
-        int status,
+        int? status,
         bool includeNestedData = true)
     {
-        var uri = $"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&status={status}&Format=JSON";
+        var uri = $"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&DAFTimestampTil={daftTimestampTo.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&Format=JSON";
 
         if (!includeNestedData)
         {
             uri += "&meddybde=false";
+        }
+
+        if (status is not null)
+        {
+            uri += $"&status={status}";
         }
 
         return new Uri(uri);
@@ -159,22 +263,58 @@ public class DatafordelerClient
         };
     }
 
+    private static DawaStatus MapStatus(DatafordelerAccessAddressStatus status)
+    {
+        return status switch
+        {
+            DatafordelerAccessAddressStatus.Pending => DawaStatus.Pending,
+            DatafordelerAccessAddressStatus.Canceled => DawaStatus.Canceled,
+            DatafordelerAccessAddressStatus.Active => DawaStatus.Active,
+            DatafordelerAccessAddressStatus.Discontinued => DawaStatus.Discontinued,
+            _ => throw new ArgumentException($"Could not convert {status}")
+        };
+    }
+
+    private static DawaStatus MapStatus(DatafordelerUnitAddressStatus status)
+    {
+        return status switch
+        {
+            DatafordelerUnitAddressStatus.Pending => DawaStatus.Pending,
+            DatafordelerUnitAddressStatus.Canceled => DawaStatus.Canceled,
+            DatafordelerUnitAddressStatus.Active => DawaStatus.Active,
+            DatafordelerUnitAddressStatus.Discontinued => DawaStatus.Discontinued,
+            _ => throw new ArgumentException($"Could not convert {status}")
+        };
+    }
+
+    private static DawaRoadStatus MapStatus(DatafordelerRoadStatus status)
+    {
+        return status switch
+        {
+            DatafordelerRoadStatus.Temporary => DawaRoadStatus.Temporary,
+            DatafordelerRoadStatus.Active => DawaRoadStatus.Effective,
+            _ => throw new ArgumentException($"Could not convert {status}")
+        };
+    }
+
     private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
         string resourceName,
-        DateTime fromDate, 
+        DateTime fromDate,
         DateTime toDate,
         bool includeNestedData,
         Func<T1, T2> fMap,
+        int? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         const int pageSize = 200;
         var page = 1;
-        const int status = 3;
 
         while (true)
         {
             var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
+
+            Console.WriteLine(resourcePath);
 
             response.EnsureSuccessStatusCode();
 

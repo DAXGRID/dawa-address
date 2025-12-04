@@ -11,7 +11,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate))
+        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate, DatafordelerAccessAddressStatus.Active))
         {
             accessAddresses.Add(accessAddress);
 
@@ -81,7 +81,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var unitAddresses = new List<DawaUnitAddress>();
-        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate))
+        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate, DatafordelerUnitAddressStatus.Active))
         {
             unitAddresses.Add(unitAddress);
 
@@ -145,7 +145,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var resources = new List<DawaRoad>();
-        await foreach (var resource in client.GetAllRoadsAsync(fromDate, toDate))
+        await foreach (var resource in client.GetAllRoadsAsync(fromDate, toDate, DatafordelerRoadStatus.Active))
         {
             resources.Add(resource);
 
@@ -182,7 +182,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var namedRoadMunicipalDistricts = new List<NamedRoadMunicipalDistrict>();
-        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(fromDate, toDate))
+        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(fromDate, toDate, DatafordelerNamedRoadMunicipalDistrictStatus.Active))
         {
             namedRoadMunicipalDistricts.Add(namedRoadMunicipalDistrict);
 
