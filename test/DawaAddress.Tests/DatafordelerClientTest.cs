@@ -151,7 +151,7 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_all_access_addresses_active_last_five_days()
+    public async Task Get_all_access_addresses_last_five_days()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
