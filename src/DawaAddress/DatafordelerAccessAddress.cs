@@ -74,7 +74,7 @@ public class DatafordelerAccessAddress
     public required string Husnummerretning { get; set; }
 
     [JsonPropertyName("husnummertekst")]
-    public required string Husnummertekst { get; set; }
+    public string? Husnummertekst { get; set; }
 
     [JsonPropertyName("id_lokalId")]
     public required string IdLokalId { get; set; }

@@ -62,7 +62,6 @@ public enum DatafordelerNamedRoadMunicipalDistrictStatus
     [Description("Nedlagt relation")]
     Discontinued = 4,
 }
-
 #pragma warning restore CA1008
 
 public class DatafordelerClient
@@ -206,7 +205,7 @@ public class DatafordelerClient
             Created = datafordelerUnitAddress.VirkningFra,
             Updated = datafordelerUnitAddress.DatafordelerOpdateringstid,
             FloorName = datafordelerUnitAddress.Etagebetegnelse,
-            Status = DawaStatus.Active,
+            Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
             SuitName = datafordelerUnitAddress.Drbetegnelse
         };
     }
@@ -221,12 +220,12 @@ public class DatafordelerClient
             Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
-            HouseNumber = datafordelerAccessAddress.Husnummertekst,
+            HouseNumber = datafordelerAccessAddress.Husnummertekst ?? "?",
             LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
             Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
             RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
-            Status = DawaStatus.Active,
+            Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
             PlotId = datafordelerAccessAddress.Jordstykke,
             PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
             RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
@@ -247,7 +246,7 @@ public class DatafordelerClient
             Created = datafordelerRoad.VirkningFra,
             Updated = datafordelerRoad.DatafordelerOpdateringstid,
             Name = datafordelerRoad.Vejnavn,
-            Status = DawaRoadStatus.Effective
+            Status = MapRoadStatus(datafordelerRoad.Status)
         };
     }
 
@@ -256,44 +255,56 @@ public class DatafordelerClient
         return new NamedRoadMunicipalDistrict
         {
             Id = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.IdLokalId),
-            Status = NamedRoadMunicipalDistrictStatus.Active,
+            Status = MapNamedRoadMunicipalDistrictStatus(datafordelerNamedRoadMunicipalDistrict.Status),
             MunicipalityCode = datafordelerNamedRoadMunicipalDistrict.Kommune,
             NamedRoadId = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.NavngivenVej.IdLokalId),
             RoadCode = datafordelerNamedRoadMunicipalDistrict.Vejkode
         };
     }
 
-    private static DawaStatus MapStatus(DatafordelerAccessAddressStatus status)
+    private static DawaStatus MapAccessAddressStatus(string status)
     {
         return status switch
         {
-            DatafordelerAccessAddressStatus.Pending => DawaStatus.Pending,
-            DatafordelerAccessAddressStatus.Canceled => DawaStatus.Canceled,
-            DatafordelerAccessAddressStatus.Active => DawaStatus.Active,
-            DatafordelerAccessAddressStatus.Discontinued => DawaStatus.Discontinued,
+            "2" => DawaStatus.Pending,
+            "3" => DawaStatus.Active,
+            "4" => DawaStatus.Discontinued,
+            "5" => DawaStatus.Canceled,
             _ => throw new ArgumentException($"Could not convert {status}")
         };
     }
 
-    private static DawaStatus MapStatus(DatafordelerUnitAddressStatus status)
+    private static DawaStatus MapUnitAddressStatus(string status)
     {
         return status switch
         {
-            DatafordelerUnitAddressStatus.Pending => DawaStatus.Pending,
-            DatafordelerUnitAddressStatus.Canceled => DawaStatus.Canceled,
-            DatafordelerUnitAddressStatus.Active => DawaStatus.Active,
-            DatafordelerUnitAddressStatus.Discontinued => DawaStatus.Discontinued,
+            "2" => DawaStatus.Pending,
+            "3" => DawaStatus.Active,
+            "4" => DawaStatus.Discontinued,
+            "5" => DawaStatus.Canceled,
             _ => throw new ArgumentException($"Could not convert {status}")
         };
     }
 
-    private static DawaRoadStatus MapStatus(DatafordelerRoadStatus status)
+    private static DawaRoadStatus MapRoadStatus(string status)
     {
         return status switch
         {
-            DatafordelerRoadStatus.Temporary => DawaRoadStatus.Temporary,
-            DatafordelerRoadStatus.Active => DawaRoadStatus.Effective,
-            _ => throw new ArgumentException($"Could not convert {status}")
+            "2" => DawaRoadStatus.Temporary,
+            "3" => DawaRoadStatus.Effective,
+            _ => throw new ArgumentException($"Could not convert: '{status}'.")
+        };
+    }
+
+    private static NamedRoadMunicipalDistrictStatus MapNamedRoadMunicipalDistrictStatus(string status)
+    {
+        return status switch
+        {
+            "2" => NamedRoadMunicipalDistrictStatus.Temporary,
+            "3" => NamedRoadMunicipalDistrictStatus.Active,
+            "4" => NamedRoadMunicipalDistrictStatus.Discontinued,
+            "5" => NamedRoadMunicipalDistrictStatus.Canceled,
+            _ => throw new ArgumentException($"Could not convert: '{status}'.")
         };
     }
 
@@ -312,6 +323,8 @@ public class DatafordelerClient
         while (true)
         {
             var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
+            Console.WriteLine(resourcePath);
+
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();
