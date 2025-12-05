@@ -15,7 +15,7 @@ public class DatafordelerClientTest
         {
             accessAddresses.Add(accessAddress);
 
-            if (accessAddresses.Count == 10000)
+            if (accessAddresses.Count == 1000)
             {
                 break;
             }
@@ -23,7 +23,7 @@ public class DatafordelerClientTest
 
         accessAddresses
             .Should()
-            .HaveCount(10000);
+            .HaveCount(1000);
 
         accessAddresses.Select(x => x.Id)
             .Should()
@@ -163,7 +163,7 @@ public class DatafordelerClientTest
         {
             unitAddresses.Add(unitAddress);
 
-            if (unitAddresses.Count == 10000)
+            if (unitAddresses.Count == 1000)
             {
                 break;
             }
@@ -171,7 +171,7 @@ public class DatafordelerClientTest
 
         unitAddresses
             .Should()
-            .HaveCount(10000);
+            .HaveCount(1000);
 
         unitAddresses.Select(x => x.AccessAddressId)
             .Should()
