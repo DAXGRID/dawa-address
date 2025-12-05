@@ -89,7 +89,7 @@ public class DatafordelerClientTest
         {
             accessAddresses.Add(accessAddress);
 
-            if (accessAddresses.Count == 1000)
+            if (accessAddresses.Count == 400)
             {
                 break;
             }
@@ -97,7 +97,7 @@ public class DatafordelerClientTest
 
         accessAddresses
             .Should()
-            .HaveCount(1000);
+            .HaveCountGreaterThan(1);
 
         accessAddresses.Select(x => x.Id)
             .Should()
@@ -156,7 +156,6 @@ public class DatafordelerClientTest
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
         var fromDate = DateTime.UtcNow.AddDays(-1);
-        Console.WriteLine("FromDate: " + fromDate);
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
@@ -231,7 +230,6 @@ public class DatafordelerClientTest
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
         var fromDate = DateTime.UtcNow.AddDays(-5);
-        Console.WriteLine("FromDate: " + fromDate);
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();

@@ -81,7 +81,7 @@ public class DatafordelerClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress>(
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress?>(
                            "Husnummer",
                            fromDate,
                            toDate,
@@ -89,6 +89,12 @@ public class DatafordelerClient
                            (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, (int?)status, cancellationToken)
                        .ConfigureAwait(false))
         {
+            // It might be NULL if the address is invalid.
+            if (x is null)
+            {
+                continue;
+            }
+
             yield return x;
         }
     }
@@ -215,8 +221,14 @@ public class DatafordelerClient
         };
     }
 
-    private static DawaAccessAddress MapAccessAddress(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
+    private static DawaAccessAddress? MapAccessAddress(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
     {
+        // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
+        if (datafordelerAccessAddress.NavngivenVej is null)
+        {
+            return null;
+        }
+
         var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
 
         return new DawaAccessAddress
@@ -328,7 +340,6 @@ public class DatafordelerClient
         while (true)
         {
             var resourcePath = BuildResourcePath(_baseAddress, resourceName, fromDate, toDate, pageSize, page, status, includeNestedData);
-            Console.WriteLine(resourcePath);
 
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 

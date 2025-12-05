@@ -113,7 +113,7 @@ public class DatafordelerAccessAddress
     public required string Virkningsaktr { get; set; }
 
     [JsonPropertyName("navngivenVej")]
-    public required NavngivenVej NavngivenVej { get; set; }
+    public NavngivenVej? NavngivenVej { get; set; }
 
     [JsonPropertyName("postnummer")]
     public required Postnummer Postnummer { get; set; }
