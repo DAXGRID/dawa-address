@@ -151,6 +151,81 @@ public class DatafordelerClientTest
     }
 
     [Fact]
+    public async Task Get_all_access_addresses_last_day()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.UtcNow.AddDays(-1);
+        Console.WriteLine("FromDate: " + fromDate);
+        var toDate = DateTime.UtcNow;
+
+        var accessAddresses = new List<DawaAccessAddress>();
+        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate))
+        {
+            accessAddresses.Add(accessAddress);
+
+            if (accessAddresses.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        accessAddresses
+            .Should()
+            .HaveCountGreaterThan(1);
+
+        accessAddresses.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.Updated.Date)
+            .Should()
+            .AllSatisfy(x => x.Should().BeOnOrAfter(fromDate.Date));
+
+        accessAddresses.Select(x => x.HouseNumber)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeNullOrWhiteSpace());
+
+        accessAddresses.Select(x => x.MunicipalCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        accessAddresses
+            .Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        accessAddresses.Select(x => x.RoadId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.PostDistrictCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.NorthCoordinate)
+            .Should()
+            .AllSatisfy(x => x.Should().BeGreaterThan(0));
+
+        accessAddresses.Select(x => x.EastCoordinate)
+            .Should()
+            .AllSatisfy(x => x.Should().BeGreaterThan(0))
+            .Should();
+
+        accessAddresses.Select(x => x.PlotId).Where(x => !string.IsNullOrWhiteSpace(x))
+            .Should()
+            .HaveCountGreaterThan(0);
+
+        accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
+            .Should()
+            .HaveCountGreaterThan(0);
+    }
+
+    [Fact]
     public async Task Get_all_access_addresses_last_five_days()
     {
         var httpClient = new HttpClient();
