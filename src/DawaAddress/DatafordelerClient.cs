@@ -322,7 +322,7 @@ public class DatafordelerClient
 
         while (true)
         {
-            var resourcePath = BuildResourcePath(_baseAddress, resourceName, DateTime.MinValue, DateTime.UtcNow, pageSize, page, status, includeNestedData);
+            var resourcePath = BuildResourcePath(_baseAddress, resourceName, fromDate, toDate, pageSize, page, status, includeNestedData);
             Console.WriteLine(resourcePath);
 
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
