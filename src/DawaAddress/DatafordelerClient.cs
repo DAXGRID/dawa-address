@@ -220,7 +220,7 @@ public class DatafordelerClient
             Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
-            HouseNumber = datafordelerAccessAddress.Husnummertekst ?? "?",
+            HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
             LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
             Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,

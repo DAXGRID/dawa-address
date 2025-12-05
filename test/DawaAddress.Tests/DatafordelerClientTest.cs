@@ -89,7 +89,7 @@ public class DatafordelerClientTest
         {
             accessAddresses.Add(accessAddress);
 
-            if (accessAddresses.Count == 10000)
+            if (accessAddresses.Count == 1000)
             {
                 break;
             }
@@ -97,7 +97,7 @@ public class DatafordelerClientTest
 
         accessAddresses
             .Should()
-            .HaveCount(10000);
+            .HaveCount(1000);
 
         accessAddresses.Select(x => x.Id)
             .Should()
@@ -151,7 +151,7 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_all_unit_addresses()
+    public async Task Get_all_unit_addresses_active()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
@@ -187,6 +187,42 @@ public class DatafordelerClientTest
     }
 
     [Fact]
+    public async Task Get_all_unit_addresses_pending()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
+        var toDate = DateTime.UtcNow;
+
+        var unitAddresses = new List<DawaUnitAddress>();
+        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate, DatafordelerUnitAddressStatus.Pending))
+        {
+            unitAddresses.Add(unitAddress);
+
+            if (unitAddresses.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        unitAddresses
+            .Should()
+            .HaveCount(1000);
+
+        unitAddresses.Select(x => x.AccessAddressId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        unitAddresses.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        unitAddresses.Select(x => x.Status)
+            .Should()
+            .AllBeEquivalentTo(DawaStatus.Pending);
+    }
+
+    [Fact]
     public async Task Get_post_codes()
     {
         var httpClient = new HttpClient();
@@ -219,7 +255,7 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_roads()
+    public async Task Get_roads_active()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
@@ -255,7 +291,43 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_named_road_municipal_districts()
+    public async Task Get_roads_temporary()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
+        var toDate = DateTime.UtcNow;
+
+        var resources = new List<DawaRoad>();
+        await foreach (var resource in client.GetAllRoadsAsync(fromDate, toDate, DatafordelerRoadStatus.Temporary))
+        {
+            resources.Add(resource);
+
+            if (resources.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        resources
+             .Should()
+             .HaveCountGreaterThan(1);
+
+        resources.Select(x => x.Name)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+    }
+
+    [Fact]
+    public async Task Get_named_road_municipal_districts_active()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
