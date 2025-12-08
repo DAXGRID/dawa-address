@@ -187,7 +187,7 @@ public class DatafordelerClient
         int? status,
         bool includeNestedData = true)
     {
-        var uri = $"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&Format=JSON";
+        var uri = $"{baseUrl}/{entityType}?DAFTimestampFra={daftTimestampFrom.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}&pagesize={pageSize}&page={page}&Format=JSON";
 
         if (!includeNestedData)
         {
@@ -201,7 +201,7 @@ public class DatafordelerClient
 
         if (daftTimestampTo is not null)
         {
-            uri += $"&DAFTimestampTil={daftTimestampTo.Value.ToUniversalTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
+            uri += $"&DAFTimestampTil={daftTimestampTo.Value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)}";
         }
 
         return new Uri(uri);
