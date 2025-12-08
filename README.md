@@ -1,7 +1,12 @@
 # DAWA Address
 
-Provides a simple streaming interface to the DAWA Address API.
+Provides a streaming interface DAWA Address API (Datafordeleren and Dataforsyningen).
+
 It does simple translation from Danish to English and enables access to both full-load and the changes API.
+
+NOTE:
+
+Dataforsyningen API is closing down (April 2026) and it is not compatible with the Datafordeleren API, so there is no longer a unified interface, but a client for `Dataforsyningen` and one for `Datafordeleren`. When Dataforsyningen address API has bee nclosed down, the client will be removed from the project.
 
 You can get the NuGet package [here](https://www.nuget.org/packages/DawaAddress).
 
