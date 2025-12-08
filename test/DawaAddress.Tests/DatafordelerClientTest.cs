@@ -151,11 +151,11 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_all_access_addresses_last_day()
+    public async Task Get_all_access_addresses_four_days()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
-        var fromDate = DateTime.UtcNow.AddDays(-1);
+        var fromDate = DateTime.UtcNow.AddDays(-4);
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
