@@ -5,10 +5,10 @@ namespace DawaAddress;
 
 public enum DawaRoadStatus
 {
-    [EnumMember(Value = "foreløbig")]
     Temporary,
-    [EnumMember(Value = "gældende")]
     Effective,
+    Discontinued,
+    Canceled
 }
 
 public record DawaRoad

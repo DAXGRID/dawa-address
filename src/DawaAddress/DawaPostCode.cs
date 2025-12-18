@@ -2,6 +2,12 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
+public enum DawaPostCodeStatus
+{
+    Active,
+    Discontinued,
+}
+
 public record DawaPostCode
 {
     [JsonPropertyName("nr")]
@@ -10,8 +16,11 @@ public record DawaPostCode
     [JsonPropertyName("navn")]
     public string Name { get; init; }
 
+    [JsonPropertyName("darstatus")]
+    public DawaPostCodeStatus Status { get; init; }
+
     [JsonConstructor]
-    public DawaPostCode(string name, string number)
+    public DawaPostCode(string name, string number, DawaPostCodeStatus status)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -25,5 +34,6 @@ public record DawaPostCode
 
         Name = name;
         Number = number;
+        Status = status;
     }
 }

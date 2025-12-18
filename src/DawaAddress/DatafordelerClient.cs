@@ -39,7 +39,7 @@ public enum DatafordelerPostCodeStatus
 {
     [Description("Gældende postnummer")]
     Active = 3,
-    [Description("Nedlagte nedlagt postnummer")]
+    [Description("Nedlagt postnummer")]
     Discontinued = 4,
 }
 
@@ -141,6 +141,7 @@ public class DatafordelerClient
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync(
         DateTime fromDate,
         DateTime toDate,
+        DatafordelerPostCodeStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>(
@@ -149,7 +150,7 @@ public class DatafordelerClient
                            toDate,
                            true,
                            MapPostCode,
-                           null,
+                           (int?)status,
                            cancellationToken)
                        .ConfigureAwait(false))
         {
@@ -252,7 +253,7 @@ public class DatafordelerClient
 
     private static DawaPostCode MapPostCode(DatafordelerPostCode datafordelerPostCode)
     {
-        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr);
+        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr, MapPostCodeStatus(datafordelerPostCode.Status));
     }
 
     private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)
@@ -309,6 +310,18 @@ public class DatafordelerClient
         {
             "2" => DawaRoadStatus.Temporary,
             "3" => DawaRoadStatus.Effective,
+            "4" => DawaRoadStatus.Discontinued,
+            "5" => DawaRoadStatus.Canceled,
+            _ => throw new ArgumentException($"Could not convert: '{status}'.")
+        };
+    }
+
+    private static DawaPostCodeStatus MapPostCodeStatus(string status)
+    {
+        return status switch
+        {
+            "3" => DawaPostCodeStatus.Active,
+            "4" => DawaPostCodeStatus.Discontinued,
             _ => throw new ArgumentException($"Could not convert: '{status}'.")
         };
     }

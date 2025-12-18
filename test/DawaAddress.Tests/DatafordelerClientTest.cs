@@ -400,6 +400,10 @@ public class DatafordelerClientTest
         postCodes.Select(x => x.Name)
             .Should()
             .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        postCodes.Select(x => x.Status)
+            .Should()
+            .AllSatisfy(x => x.Should().Be(DawaPostCodeStatus.Active));
     }
 
     [Fact]
