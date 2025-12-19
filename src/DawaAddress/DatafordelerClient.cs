@@ -253,7 +253,13 @@ public class DatafordelerClient
 
     private static DawaPostCode MapPostCode(DatafordelerPostCode datafordelerPostCode)
     {
-        return new DawaPostCode(datafordelerPostCode.Navn, datafordelerPostCode.Postnr, MapPostCodeStatus(datafordelerPostCode.Status));
+        return new DawaPostCode(
+            datafordelerPostCode.Navn,
+            datafordelerPostCode.Postnr,
+            MapPostCodeStatus(datafordelerPostCode.Status),
+            datafordelerPostCode.VirkningFra,
+            datafordelerPostCode.DatafordelerOpdateringstid
+        );
     }
 
     private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)

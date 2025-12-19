@@ -19,8 +19,19 @@ public record DawaPostCode
     [JsonPropertyName("darstatus")]
     public DawaPostCodeStatus Status { get; init; }
 
+    [JsonPropertyName("oprettet")]
+    public DateTime Created { get; init; }
+
+    [JsonPropertyName("ændret")]
+    public DateTime? Updated { get; init; }
+
     [JsonConstructor]
-    public DawaPostCode(string name, string number, DawaPostCodeStatus status)
+    public DawaPostCode(
+        string name,
+        string number,
+        DawaPostCodeStatus status,
+        DateTime created,
+        DateTime? updated)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -35,5 +46,7 @@ public record DawaPostCode
         Name = name;
         Number = number;
         Status = status;
+        Created = created;
+        Updated = updated;
     }
 }

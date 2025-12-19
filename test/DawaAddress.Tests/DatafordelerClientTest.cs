@@ -404,6 +404,14 @@ public class DatafordelerClientTest
         postCodes.Select(x => x.Status)
             .Should()
             .AllSatisfy(x => x.Should().Be(DawaPostCodeStatus.Active));
+
+        postCodes.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        postCodes.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 
     [Fact]
