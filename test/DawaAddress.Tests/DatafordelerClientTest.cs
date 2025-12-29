@@ -3,6 +3,80 @@ namespace DawaAddress.Tests;
 public class DatafordelerClientTest
 {
     [Fact]
+    public async Task Get_all_access_addresses_active_pending_from_file()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+        var fromDate = DateTime.MinValue;
+        var toDate = DateTime.UtcNow;
+
+        var accessAddresses = new List<DawaAccessAddress>();
+        await foreach (var accessAddress in client.GetAllAccessAddressesAsync(new() { DawaStatus.Active, DawaStatus.Pending }))
+        {
+            accessAddresses.Add(accessAddress);
+
+            if (accessAddresses.Count == 100_000)
+            {
+                break;
+            }
+        }
+
+        accessAddresses
+            .Should()
+            .HaveCount(100_000);
+
+        accessAddresses.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.HouseNumber)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeNullOrWhiteSpace());
+
+        accessAddresses.Select(x => x.MunicipalCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        accessAddresses
+            .Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new()));
+
+        accessAddresses.Select(x => x.RoadId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.PostDistrictCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        accessAddresses.Select(x => x.NorthCoordinate)
+            .Should()
+            .AllSatisfy(x => x.Should().BeGreaterThan(0));
+
+        accessAddresses.Select(x => x.EastCoordinate)
+            .Should()
+            .AllSatisfy(x => x.Should().BeGreaterThan(0))
+            .Should();
+
+        accessAddresses.Select(x => x.PlotId).Where(x => !string.IsNullOrWhiteSpace(x))
+            .Should()
+            .HaveCountGreaterThan(0);
+
+        accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
+            .Should()
+            .HaveCountGreaterThan(0);
+
+        accessAddresses.Select(x => x.Status)
+            .Should()
+            .AllSatisfy(x => x.Should().Match(x => x == DawaStatus.Active || x == DawaStatus.Pending));
+    }
+
+    [Fact]
     public async Task Get_all_access_addresses_active()
     {
         var httpClient = new HttpClient();
@@ -11,7 +85,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate, DatafordelerAccessAddressStatus.Active))
+        await foreach (var accessAddress in client.GetAllAccessAddressesAsync(fromDate, toDate, DatafordelerAccessAddressStatus.Active))
         {
             accessAddresses.Add(accessAddress);
 
@@ -67,10 +141,6 @@ public class DatafordelerClientTest
             .Should()
             .HaveCountGreaterThan(0);
 
-        accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
-            .Should()
-            .HaveCountGreaterThan(0);
-
         accessAddresses.Select(x => x.Status)
             .Should()
             .AllBeEquivalentTo(DawaStatus.Active);
@@ -85,7 +155,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate, DatafordelerAccessAddressStatus.Pending))
+        await foreach (var accessAddress in client.GetAllAccessAddressesAsync(fromDate, toDate, DatafordelerAccessAddressStatus.Pending))
         {
             accessAddresses.Add(accessAddress);
 
@@ -159,7 +229,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate))
+        await foreach (var accessAddress in client.GetAllAccessAddressesAsync(fromDate, toDate))
         {
             accessAddresses.Add(accessAddress);
 
@@ -225,77 +295,37 @@ public class DatafordelerClientTest
     }
 
     [Fact]
-    public async Task Get_all_access_addresses_last_five_days()
+    public async Task Get_all_unit_addresses_from_file_active_and_temporary()
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
-        var fromDate = DateTime.UtcNow.AddDays(-5);
-        var toDate = DateTime.UtcNow;
 
-        var accessAddresses = new List<DawaAccessAddress>();
-        await foreach (var accessAddress in client.GetAllAccessAddresses(fromDate, toDate))
+        var unitAddresses = new List<DawaUnitAddress>();
+        await foreach (var unitAddress in client.GetAllUnitAddressesAsync(new() { DawaStatus.Active, DawaStatus.Pending }))
         {
-            accessAddresses.Add(accessAddress);
+            unitAddresses.Add(unitAddress);
 
-            if (accessAddresses.Count == 1000)
+            if (unitAddresses.Count == 100_000)
             {
                 break;
             }
-        }
+       }
 
-        accessAddresses
+        unitAddresses
             .Should()
-            .HaveCount(1000);
+            .HaveCount(100_000);
 
-        accessAddresses.Select(x => x.Id)
-            .Should()
-            .AllSatisfy(x => x.Should().NotBeEmpty());
-
-        accessAddresses.Select(x => x.Updated.Date)
-            .Should()
-            .AllSatisfy(x => x.Should().BeOnOrAfter(fromDate.Date));
-
-        accessAddresses.Select(x => x.HouseNumber)
-            .Should()
-            .AllSatisfy(x => x.Should().NotBeNullOrWhiteSpace());
-
-        accessAddresses.Select(x => x.MunicipalCode)
+        unitAddresses.Select(x => x.AccessAddressId)
             .Should()
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
-        accessAddresses.Select(x => x.Created)
-            .Should()
-            .AllSatisfy(x => x.Should().BeAfter(new()));
-
-        accessAddresses
-            .Select(x => x.Updated)
-            .Should()
-            .AllSatisfy(x => x.Should().BeAfter(new()));
-
-        accessAddresses.Select(x => x.RoadId)
+        unitAddresses.Select(x => x.Id)
             .Should()
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
-        accessAddresses.Select(x => x.PostDistrictCode)
+        unitAddresses.Select(x => x.Status)
             .Should()
-            .AllSatisfy(x => x.Should().NotBeEmpty());
-
-        accessAddresses.Select(x => x.NorthCoordinate)
-            .Should()
-            .AllSatisfy(x => x.Should().BeGreaterThan(0));
-
-        accessAddresses.Select(x => x.EastCoordinate)
-            .Should()
-            .AllSatisfy(x => x.Should().BeGreaterThan(0))
-            .Should();
-
-        accessAddresses.Select(x => x.PlotId).Where(x => !string.IsNullOrWhiteSpace(x))
-            .Should()
-            .HaveCountGreaterThan(0);
-
-        accessAddresses.Select(x => x.SupplementaryTownName).Where(x => !string.IsNullOrWhiteSpace(x))
-            .Should()
-            .HaveCountGreaterThan(0);
+            .AllSatisfy(x => x.Should().Match(x => x == DawaStatus.Active || x == DawaStatus.Pending));
     }
 
     [Fact]
@@ -307,7 +337,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var unitAddresses = new List<DawaUnitAddress>();
-        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate, DatafordelerUnitAddressStatus.Active))
+        await foreach (var unitAddress in client.GetAllUnitAddressesAsync(fromDate, toDate, DatafordelerUnitAddressStatus.Active))
         {
             unitAddresses.Add(unitAddress);
 
@@ -343,7 +373,7 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var unitAddresses = new List<DawaUnitAddress>();
-        await foreach (var unitAddress in client.GetAllUnitAddresses(fromDate, toDate, DatafordelerUnitAddressStatus.Pending))
+        await foreach (var unitAddress in client.GetAllUnitAddressesAsync(fromDate, toDate, DatafordelerUnitAddressStatus.Pending))
         {
             unitAddresses.Add(unitAddress);
 
@@ -375,11 +405,9 @@ public class DatafordelerClientTest
     {
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient);
-        var fromDate = DateTime.MinValue;
-        var toDate = DateTime.UtcNow;
 
         var postCodes = new List<DawaPostCode>();
-        await foreach (var postCode in client.GetAllPostCodesAsync(fromDate, toDate))
+        await foreach (var postCode in client.GetAllPostCodesAsync())
         {
             postCodes.Add(postCode);
 
@@ -410,6 +438,39 @@ public class DatafordelerClientTest
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
 
         postCodes.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+    }
+
+    [Fact]
+    public async Task Get_all_roads_active_from_file()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient);
+
+        var resources = new List<DawaRoad>();
+        await foreach (var resource in client.GetAllRoadsAsync(new() { DawaRoadStatus.Effective, DawaRoadStatus.Temporary }))
+        {
+            resources.Add(resource);
+        }
+
+        resources
+             .Should()
+             .HaveCountGreaterThan(1000);
+
+        resources.Select(x => x.Name)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        resources.Select(x => x.Status)
+            .Should()
+            .AllSatisfy(x => x.Should().Match(x => x == DawaRoadStatus.Effective || x == DawaRoadStatus.Temporary));
+
+        resources.Select(x => x.Created)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }

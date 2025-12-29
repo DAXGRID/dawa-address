@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.IO.Compression;
 
 namespace DawaAddress;
 
@@ -67,6 +68,8 @@ public enum DatafordelerNamedRoadMunicipalDistrictStatus
 public class DatafordelerClient
 {
     private const string _baseAddress = "https://services.datafordeler.dk/DAR/DAR/3.0.0/rest";
+    private const string _baseAddressApi = "https://api.datafordeler.dk";
+    private const string _apiKey = "";
     private readonly HttpClient _httpClient;
 
     public DatafordelerClient(HttpClient httpClient)
@@ -74,19 +77,85 @@ public class DatafordelerClient
         _httpClient = httpClient;
     }
 
-    public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddresses(
+    public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddressesAsync(HashSet<DawaStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(includeStatuses);
+        var wktReader = new WKTReader();
+
+        var adgangsPunktLookUp = new Dictionary<Guid, AdgangspunktFileServer>();
+        await foreach (var x in GetAllFromFileAsync<AdgangspunktFileServer, AdgangspunktFileServer?>(
+                           "Adressepunkt",
+                           _apiKey,
+                           (AdgangspunktFileServer x) => { return x; },
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            // It might be NULL if the address is invalid.
+            if (x is null)
+            {
+                continue;
+            }
+
+            adgangsPunktLookUp.Add(Guid.Parse(x.IdLokalId), x);
+        }
+
+        var sogneIndelingLookup = new Dictionary<Guid, SupplerendeByNavnFileServer>();
+        await foreach (var x in GetAllFromFileAsync<SupplerendeByNavnFileServer, SupplerendeByNavnFileServer?>(
+                           "SupplerendeBynavn",
+                           _apiKey,
+                           (SupplerendeByNavnFileServer x) => { return x; },
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            // It might be NULL if the address is invalid.
+            if (x is null)
+            {
+                continue;
+            }
+
+            sogneIndelingLookup.Add(Guid.Parse(x.IdLokalId), x);
+        }
+
+        var postalCodeLookup  = new Dictionary<Guid, DawaPostCode>();
+        await foreach (var postalCode in GetAllPostCodesAsync(cancellationToken).ConfigureAwait(false))
+        {
+            postalCodeLookup.Add(postalCode.Id, postalCode);
+        }
+
+        await foreach (var x in GetAllFromFileAsync<DatafordelerAccessAddressFileServer, DawaAccessAddress?>(
+                           "Husnummer",
+                           _apiKey,
+                           (DatafordelerAccessAddressFileServer x) => { return MapAccessAddress(x, wktReader, adgangsPunktLookUp, postalCodeLookup, sogneIndelingLookup); },
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            // It might be NULL if the address is invalid.
+            if (x is null)
+            {
+                continue;
+            }
+
+            if (includeStatuses.Contains(x.Status))
+            {
+                yield return x;
+            }
+        }
+    }
+
+    public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddressesAsync(
         DateTime fromDate,
         DateTime toDate,
         DatafordelerAccessAddressStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddress, DawaAccessAddress?>(
+        await foreach (var x in GetAllAsync<DatafordelerAccessAddressApi, DawaAccessAddress?>(
                            "Husnummer",
                            fromDate,
                            toDate,
                            true,
-                           (DatafordelerAccessAddress x) => { return MapAccessAddress(x, wktReader); }, (int?)status, cancellationToken)
+                           (DatafordelerAccessAddressApi x) => { return MapAccessAddress(x, wktReader); },
+                           (int?)status, cancellationToken)
                        .ConfigureAwait(false))
         {
             // It might be NULL if the address is invalid.
@@ -99,13 +168,31 @@ public class DatafordelerClient
         }
     }
 
-    public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddresses(
+    public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddressesAsync(HashSet<DawaStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(includeStatuses);
+
+        await foreach (var x in GetAllFromFileAsync<DatafordelerUnitAddressFileServer, DawaUnitAddress>(
+                           "Adresse",
+                           _apiKey,
+                           MapUnitAddress,
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            if (includeStatuses.Contains(x.Status))
+            {
+                yield return x;
+            }
+        }
+    }
+
+    public async IAsyncEnumerable<DawaUnitAddress> GetAllUnitAddressesAsync(
         DateTime fromDate,
         DateTime toDate,
         DatafordelerUnitAddressStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerUnitAddress, DawaUnitAddress>(
+        await foreach (var x in GetAllAsync<DatafordelerUnitAddressApi, DawaUnitAddress>(
                            "Adresse",
                            fromDate,
                            toDate,
@@ -115,6 +202,24 @@ public class DatafordelerClient
                        .ConfigureAwait(false))
         {
             yield return x;
+        }
+    }
+
+    public async IAsyncEnumerable<DawaRoad> GetAllRoadsAsync(HashSet<DawaRoadStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(includeStatuses);
+
+        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad>(
+                           "Navngivenvej",
+                           _apiKey,
+                           MapRoad,
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            if (includeStatuses.Contains(x.Status))
+            {
+                yield return x;
+            }
         }
     }
 
@@ -131,6 +236,19 @@ public class DatafordelerClient
                            false,
                            MapRoad,
                            (int?)status,
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            yield return x;
+        }
+    }
+
+    public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var x in GetAllFromFileAsync<DatafordelerPostCode, DawaPostCode>(
+                           "Postnummer",
+                           _apiKey,
+                           MapPostCode,
                            cancellationToken)
                        .ConfigureAwait(false))
         {
@@ -178,6 +296,14 @@ public class DatafordelerClient
         }
     }
 
+    private static Uri BuildResourcePathFileDownload(
+        string baseUri,
+        string entityType,
+        string apiKey)
+    {
+        return new Uri($"{baseUri}/FileDownloads/GetFile?Register=DAR&LatestTotalForEntity={entityType}&type=current&format=JSON&apikey={apiKey}");
+    }
+
     private static Uri BuildResourcePath(
         string baseUrl,
         string entityType,
@@ -208,7 +334,21 @@ public class DatafordelerClient
         return new Uri(uri);
     }
 
-    private static DawaUnitAddress MapUnitAddress(DatafordelerUnitAddress datafordelerUnitAddress)
+    private static DawaUnitAddress MapUnitAddress(DatafordelerUnitAddressFileServer datafordelerUnitAddress)
+    {
+        return new DawaUnitAddress
+        {
+            Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
+            AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer),
+            Created = datafordelerUnitAddress.VirkningFra,
+            Updated = datafordelerUnitAddress.DatafordelerOpdateringstid,
+            FloorName = datafordelerUnitAddress.Etagebetegnelse,
+            Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
+            SuitName = datafordelerUnitAddress.Drbetegnelse
+        };
+    }
+
+    private static DawaUnitAddress MapUnitAddress(DatafordelerUnitAddressApi datafordelerUnitAddress)
     {
         return new DawaUnitAddress
         {
@@ -222,7 +362,7 @@ public class DatafordelerClient
         };
     }
 
-    private static DawaAccessAddress? MapAccessAddress(DatafordelerAccessAddress datafordelerAccessAddress, WKTReader wktReader)
+    private static DawaAccessAddress? MapAccessAddress(DatafordelerAccessAddressApi datafordelerAccessAddress, WKTReader wktReader)
     {
         // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
         if (datafordelerAccessAddress.NavngivenVej is null)
@@ -247,13 +387,58 @@ public class DatafordelerClient
             PlotId = datafordelerAccessAddress.Jordstykke,
             PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
             RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
-            SupplementaryTownName = datafordelerAccessAddress.Sogneinddeling.Navn
+            SupplementaryTownName = datafordelerAccessAddress.SupplerendeBynavn?.Navn
+        };
+    }
+
+    private static DawaAccessAddress? MapAccessAddress(
+        DatafordelerAccessAddressFileServer datafordelerAccessAddress,
+        WKTReader wktReader,
+        Dictionary<Guid, AdgangspunktFileServer> adgangsPunktLookup,
+        Dictionary<Guid, DawaPostCode> postalCodeLookup,
+        Dictionary<Guid, SupplerendeByNavnFileServer> supplementaryTownNameLookUp)
+    {
+        // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
+        if (datafordelerAccessAddress.NavngivenVej is null)
+        {
+            return null;
+        }
+
+        var adgangsPunkt = adgangsPunktLookup[Guid.Parse(datafordelerAccessAddress.Adgangspunkt)];
+        var postCode = postalCodeLookup[Guid.Parse(datafordelerAccessAddress.Postnummer)];
+
+        string? supplementaryTownName = null;
+        if (datafordelerAccessAddress.SupplerendeBynavn is not null)
+        {
+
+            supplementaryTownName = supplementaryTownNameLookUp[Guid.Parse(datafordelerAccessAddress.SupplerendeBynavn)].Navn;
+        }
+
+        var point = (Point)wktReader.Read(adgangsPunkt.Position);
+
+        return new DawaAccessAddress
+        {
+            Created = datafordelerAccessAddress.VirkningFra,
+            Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
+            EastCoordinate = point.X,
+            NorthCoordinate = point.Y,
+            HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
+            LocationUpdated = adgangsPunkt.DatafordelerOpdateringstid,
+            MunicipalCode = datafordelerAccessAddress.Kommuneinddeling,
+            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
+            RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
+            Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
+            PlotId = datafordelerAccessAddress.Jordstykke,
+            PostDistrictCode = postCode?.Number ?? "",
+            RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej),
+            SupplementaryTownName = supplementaryTownName
         };
     }
 
     private static DawaPostCode MapPostCode(DatafordelerPostCode datafordelerPostCode)
     {
         return new DawaPostCode(
+            Guid.Parse(datafordelerPostCode.IdLokalId),
             datafordelerPostCode.Navn,
             datafordelerPostCode.Postnr,
             MapPostCodeStatus(datafordelerPostCode.Status),
@@ -344,6 +529,46 @@ public class DatafordelerClient
         };
     }
 
+    private async IAsyncEnumerable<T2> GetAllFromFileAsync<T1, T2>(
+        string resourceName,
+        string apiKey,
+        Func<T1, T2> fMap,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            var path = "/home/notation/dawa";
+            var tempFileName = $"{path}/{Guid.NewGuid()}";
+            var tempFileNameZip = $"{tempFileName}.zip";
+
+            var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
+            var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
+
+            using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
+            {
+                await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+            }
+
+            ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
+
+            var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
+
+            using (var fs = new FileStream(jsonfileName, FileMode.Open))
+            {
+                var resources = JsonSerializer.DeserializeAsyncEnumerable<T1?>(fs, cancellationToken: cancellationToken);
+                await foreach (var resource in resources.ConfigureAwait(false))
+                {
+                    if (resource is null)
+                    {
+                        throw new ArgumentException($"Could not deserialize JSON output from DAWA for {resourceName}.");
+                    }
+
+                    yield return fMap(resource);
+                }
+            }
+
+            File.Delete(tempFileNameZip);
+            Directory.Delete(tempFileName, true);
+        }
+
     private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
         string resourceName,
         DateTime fromDate,
@@ -359,7 +584,6 @@ public class DatafordelerClient
         while (true)
         {
             var resourcePath = BuildResourcePath(_baseAddress, resourceName, fromDate, toDate, pageSize, page, status, includeNestedData);
-
             var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
             response.EnsureSuccessStatusCode();

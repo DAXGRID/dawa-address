@@ -10,6 +10,9 @@ public enum DawaPostCodeStatus
 
 public record DawaPostCode
 {
+    [JsonPropertyName("id")]
+    public Guid Id { get; init; }
+
     [JsonPropertyName("nr")]
     public string Number { get; init; }
 
@@ -27,6 +30,7 @@ public record DawaPostCode
 
     [JsonConstructor]
     public DawaPostCode(
+        Guid id,
         string name,
         string number,
         DawaPostCodeStatus status,
@@ -43,6 +47,7 @@ public record DawaPostCode
             throw new ArgumentNullException(nameof(name));
         }
 
+        Id = id;
         Name = name;
         Number = number;
         Status = status;
