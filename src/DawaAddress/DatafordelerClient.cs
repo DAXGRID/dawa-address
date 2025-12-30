@@ -69,12 +69,13 @@ public class DatafordelerClient
 {
     private const string _baseAddress = "https://services.datafordeler.dk/DAR/DAR/3.0.0/rest";
     private const string _baseAddressApi = "https://api.datafordeler.dk";
-    private const string _apiKey = "";
+    private readonly string _apiKey;
     private readonly HttpClient _httpClient;
 
-    public DatafordelerClient(HttpClient httpClient)
+    public DatafordelerClient(HttpClient httpClient, string apiKey)
     {
         _httpClient = httpClient;
+        _apiKey = apiKey;
     }
 
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddressesAsync(HashSet<DawaStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -83,14 +84,13 @@ public class DatafordelerClient
         var wktReader = new WKTReader();
 
         var adgangsPunktLookUp = new Dictionary<Guid, AdgangspunktFileServer>();
-        await foreach (var x in GetAllFromFileAsync<AdgangspunktFileServer, AdgangspunktFileServer?>(
+        await foreach (var x in GetAllFromFileAsync<AdgangspunktFileServer, AdgangspunktFileServer>(
                            "Adressepunkt",
                            _apiKey,
                            (AdgangspunktFileServer x) => { return x; },
                            cancellationToken)
                        .ConfigureAwait(false))
         {
-            // It might be NULL if the address is invalid.
             if (x is null)
             {
                 continue;
@@ -100,19 +100,13 @@ public class DatafordelerClient
         }
 
         var sogneIndelingLookup = new Dictionary<Guid, SupplerendeByNavnFileServer>();
-        await foreach (var x in GetAllFromFileAsync<SupplerendeByNavnFileServer, SupplerendeByNavnFileServer?>(
+        await foreach (var x in GetAllFromFileAsync<SupplerendeByNavnFileServer, SupplerendeByNavnFileServer>(
                            "SupplerendeBynavn",
                            _apiKey,
                            (SupplerendeByNavnFileServer x) => { return x; },
                            cancellationToken)
                        .ConfigureAwait(false))
         {
-            // It might be NULL if the address is invalid.
-            if (x is null)
-            {
-                continue;
-            }
-
             sogneIndelingLookup.Add(Guid.Parse(x.IdLokalId), x);
         }
 
@@ -535,8 +529,7 @@ public class DatafordelerClient
         Func<T1, T2> fMap,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var path = "/home/notation/dawa";
-            var tempFileName = $"{path}/{Guid.NewGuid()}";
+            var tempFileName = $"{Path.GetTempPath()}/{Guid.NewGuid()}";
             var tempFileNameZip = $"{tempFileName}.zip";
 
             var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);

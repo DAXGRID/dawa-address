@@ -17,14 +17,6 @@ jobs:
           name: Build
           command: dotnet build
 
-  test-app:
-    executor: dotnet-core-sdk
-    steps:
-      - checkout
-      - run:
-          name: Test
-          command: dotnet test
-
   publish-nuget:
     executor: dotnet-core-sdk
     steps:

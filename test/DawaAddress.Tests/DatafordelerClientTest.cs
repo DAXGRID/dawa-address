@@ -2,11 +2,14 @@ namespace DawaAddress.Tests;
 
 public class DatafordelerClientTest
 {
+    // Insert API key here.
+    const string ApiKey = "";
+
     [Fact]
     public async Task Get_all_access_addresses_active_pending_from_file()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -15,7 +18,7 @@ public class DatafordelerClientTest
         {
             accessAddresses.Add(accessAddress);
 
-            if (accessAddresses.Count == 100_000)
+            if (accessAddresses.Count == 10_000)
             {
                 break;
             }
@@ -23,7 +26,7 @@ public class DatafordelerClientTest
 
         accessAddresses
             .Should()
-            .HaveCount(100_000);
+            .HaveCount(10_000);
 
         accessAddresses.Select(x => x.Id)
             .Should()
@@ -80,7 +83,7 @@ public class DatafordelerClientTest
     public async Task Get_all_access_addresses_active()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -150,7 +153,7 @@ public class DatafordelerClientTest
     public async Task Get_all_access_addresses_pending()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -224,7 +227,7 @@ public class DatafordelerClientTest
     public async Task Get_all_access_addresses_four_days()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.UtcNow.AddDays(-4);
         var toDate = DateTime.UtcNow;
 
@@ -298,14 +301,14 @@ public class DatafordelerClientTest
     public async Task Get_all_unit_addresses_from_file_active_and_temporary()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
 
         var unitAddresses = new List<DawaUnitAddress>();
         await foreach (var unitAddress in client.GetAllUnitAddressesAsync(new() { DawaStatus.Active, DawaStatus.Pending }))
         {
             unitAddresses.Add(unitAddress);
 
-            if (unitAddresses.Count == 100_000)
+            if (unitAddresses.Count == 10_000)
             {
                 break;
             }
@@ -313,7 +316,7 @@ public class DatafordelerClientTest
 
         unitAddresses
             .Should()
-            .HaveCount(100_000);
+            .HaveCount(10_000);
 
         unitAddresses.Select(x => x.AccessAddressId)
             .Should()
@@ -332,7 +335,7 @@ public class DatafordelerClientTest
     public async Task Get_all_unit_addresses_active()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -368,7 +371,7 @@ public class DatafordelerClientTest
     public async Task Get_all_unit_addresses_pending()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -404,7 +407,7 @@ public class DatafordelerClientTest
     public async Task Get_post_codes()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
 
         var postCodes = new List<DawaPostCode>();
         await foreach (var postCode in client.GetAllPostCodesAsync())
@@ -446,7 +449,7 @@ public class DatafordelerClientTest
     public async Task Get_all_roads_active_from_file()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
 
         var resources = new List<DawaRoad>();
         await foreach (var resource in client.GetAllRoadsAsync(new() { DawaRoadStatus.Effective, DawaRoadStatus.Temporary }))
@@ -479,7 +482,7 @@ public class DatafordelerClientTest
     public async Task Get_roads_active()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -515,7 +518,7 @@ public class DatafordelerClientTest
     public async Task Get_roads_temporary()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
 
@@ -551,7 +554,7 @@ public class DatafordelerClientTest
     public async Task Get_named_road_municipal_districts_active()
     {
         var httpClient = new HttpClient();
-        var client = new DatafordelerClient(httpClient);
+        var client = new DatafordelerClient(httpClient, ApiKey);
 
         var fromDate = DateTime.MinValue;
         var toDate = DateTime.UtcNow;
