@@ -433,14 +433,14 @@ public class DatafordelerClient
         // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
         if (datafordelerAccessAddress.NavngivenVej is null)
         {
-            Console.WriteLine($"Could not find adgangspunkt with id: '{datafordelerAccessAddress.Adgangspunkt}' on access address with id: '{datafordelerAccessAddress.IdLokalId}'.")
+            Console.WriteLine($"Could not find adgangspunkt with id: '{datafordelerAccessAddress.Adgangspunkt}' on access address with id: '{datafordelerAccessAddress.IdLokalId}'.");
             return null;
         }
 
         // This is done because their data is invalid and can reference things that do not exist.
         if (!adgangsPunktLookup.TryGetValue(Guid.Parse(datafordelerAccessAddress.Adgangspunkt), out var adgangsPunkt))
         {
-            Console.WriteLine($"Could not find adgangspunkt with id: '{datafordelerAccessAddress.Adgangspunkt}' on access address with id: '{datafordelerAccessAddress.IdLokalId}'.")
+            Console.WriteLine($"Could not find adgangspunkt with id: '{datafordelerAccessAddress.Adgangspunkt}' on access address with id: '{datafordelerAccessAddress.IdLokalId}'.");
             return null;
         }
 
