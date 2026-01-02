@@ -78,6 +78,44 @@ public class DatafordelerClient
         _apiKey = apiKey;
     }
 
+    public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesAsync(
+        string resourceName,
+        CancellationToken cancellationToken = default)
+    {
+        var resourcePath = new Uri($"{_baseAddressApi}/FileDownloads/GetAvailableFileDownloads?Register=DAR&format=JSON&apikey={_apiKey}");
+
+        var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
+
+        response.EnsureSuccessStatusCode();
+
+        var resources = await response.Content.ReadFromJsonAsync<DatafordelerFileResponse>(cancellationToken).ConfigureAwait(false);
+
+        if (resources is null)
+        {
+            throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
+        }
+
+        return resources
+            .AvailableFileDownloads
+            .Where(x => x.EntityName == resourceName)
+            .Where(x => x.ContainedFileFormat == "json")
+            .Where(x => x.Version == "3");
+    }
+
+    public async Task<DatafordelerFile> LatestGenerationTotalDownloadFileResourceAsync(
+        string resourceName,
+        CancellationToken cancellationToken = default)
+    {
+        var resources = await LatestGenerationFileResourcesAsync(resourceName, cancellationToken).ConfigureAwait(false);
+
+        return resources
+            .Where(x => x.EntityName == resourceName)
+            .Where(x => x.TypeOfDownload == "TotalDownload")
+            .Where(x => x.TypeOfData == "Current")
+            .OrderByDescending(x => x.GenerationNumber)
+            .First();
+    }
+
     public async IAsyncEnumerable<DawaAccessAddress> GetAllAccessAddressesAsync(HashSet<DawaStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(includeStatuses);

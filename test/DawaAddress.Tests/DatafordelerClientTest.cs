@@ -6,6 +6,59 @@ public class DatafordelerClientTest
     const string ApiKey = "";
 
     [Fact]
+    public async Task All_datafordeler_file_resources_latest_version()
+    {
+        var resourceType = "Husnummer";
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient, ApiKey);
+
+        var fileResources = await client.LatestGenerationFileResourcesAsync(resourceType).ConfigureAwait(false);
+
+        fileResources.Should().NotBeNull();
+        fileResources.Should().HaveCountGreaterThan(1);
+    }
+
+    [Fact]
+    public async Task Get_lastest_generation_total_entity_file_resource_for_husnummer()
+    {
+        var resourceType = "Husnummer";
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient, ApiKey);
+
+        var fileResource = await client.LatestGenerationTotalDownloadFileResourceAsync(resourceType).ConfigureAwait(false);
+
+        fileResource.Should().NotBeNull();
+        fileResource.FileName.Should().NotBeEmpty();
+        fileResource.Register.Should().Be("DAR");
+        fileResource.EntityName.Should().Be(resourceType);
+        fileResource.TypeOfDownload.Should().Be("TotalDownload");
+        fileResource.TypeOfData.Should().Be("Current");
+        fileResource.GenerationNumber.Should().BeGreaterThan(496);
+        fileResource.Version.Should().Be("3");
+        fileResource.ContainedFileFormat.Should().Be("json");
+    }
+
+    [Fact]
+    public async Task Get_lastest_generation_total_entity_file_resource_for_postnummer()
+    {
+        var resourceType = "Postnummer";
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient, ApiKey);
+
+        var fileResource = await client.LatestGenerationTotalDownloadFileResourceAsync(resourceType).ConfigureAwait(false);
+
+        fileResource.Should().NotBeNull();
+        fileResource.FileName.Should().NotBeEmpty();
+        fileResource.Register.Should().Be("DAR");
+        fileResource.EntityName.Should().Be(resourceType);
+        fileResource.TypeOfDownload.Should().Be("TotalDownload");
+        fileResource.TypeOfData.Should().Be("Current");
+        fileResource.GenerationNumber.Should().BeGreaterThan(496);
+        fileResource.Version.Should().Be("3");
+        fileResource.ContainedFileFormat.Should().Be("json");
+    }
+
+    [Fact]
     public async Task Get_all_access_addresses_active_pending_from_file()
     {
         var httpClient = new HttpClient();
