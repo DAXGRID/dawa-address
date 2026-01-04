@@ -5,17 +5,20 @@ public class DatafordelerClientTest
     // Insert API key here.
     const string ApiKey = "";
 
+
     [Fact]
-    public async Task All_datafordeler_file_resources_latest_version()
+    public async Task Get_latest_generation_number_current_total()
     {
-        var resourceType = "Husnummer";
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient, ApiKey);
 
-        var fileResources = await client.LatestGenerationFileResourcesAsync(resourceType).ConfigureAwait(false);
+        var latestGenerationNumber = await client 
+            .LatestGenerationNumberCurrentTotalDownloadAsync()
+            .ConfigureAwait(false);
 
-        fileResources.Should().NotBeNull();
-        fileResources.Should().HaveCountGreaterThan(1);
+        Console.WriteLine(latestGenerationNumber.Value);
+        latestGenerationNumber.Should().NotBeNull();
+        latestGenerationNumber.Value.Should().BeGreaterThan(500);
     }
 
     [Fact]
@@ -25,7 +28,9 @@ public class DatafordelerClientTest
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient, ApiKey);
 
-        var fileResource = await client.LatestGenerationTotalDownloadFileResourceAsync(resourceType).ConfigureAwait(false);
+        var fileResource = await client
+            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType)
+            .ConfigureAwait(false);
 
         fileResource.Should().NotBeNull();
         fileResource.FileName.Should().NotBeEmpty();
@@ -45,7 +50,9 @@ public class DatafordelerClientTest
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient, ApiKey);
 
-        var fileResource = await client.LatestGenerationTotalDownloadFileResourceAsync(resourceType).ConfigureAwait(false);
+        var fileResource = await client
+            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType)
+            .ConfigureAwait(false);
 
         fileResource.Should().NotBeNull();
         fileResource.FileName.Should().NotBeEmpty();

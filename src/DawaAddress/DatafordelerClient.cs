@@ -78,8 +78,26 @@ public class DatafordelerClient
         _apiKey = apiKey;
     }
 
+    public async Task<int?> LatestGenerationNumberCurrentTotalDownloadAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
+        var resourcesGroupedByEntityName = resources
+            .GroupBy(x => x.EntityName);
+
+        var generationNumbers = new List<int>();
+        foreach (var resourceByEntityName in resourcesGroupedByEntityName)
+        {
+            generationNumbers.Add(
+                resourceByEntityName.OrderByDescending(x => x.GenerationNumber).First().GenerationNumber);
+        }
+
+        return generationNumbers.Distinct().Count() == 1
+            ? generationNumbers.First()
+            : null;
+    }
+
     public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesAsync(
-        string resourceName,
         CancellationToken cancellationToken = default)
     {
         var resourcePath = new Uri($"{_baseAddressApi}/FileDownloads/GetAvailableFileDownloads?Register=DAR&format=JSON&apikey={_apiKey}");
@@ -92,27 +110,32 @@ public class DatafordelerClient
 
         if (resources is null)
         {
-            throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
+            throw new InvalidOperationException($"Received NULL when trying to get resouces from path: '{resourcePath}'.");
         }
 
         return resources
             .AvailableFileDownloads
-            .Where(x => x.EntityName == resourceName)
             .Where(x => x.ContainedFileFormat == "json")
             .Where(x => x.Version == "3");
     }
 
-    public async Task<DatafordelerFile> LatestGenerationTotalDownloadFileResourceAsync(
+    public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesCurrentTotalDownloadAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var resources = await LatestGenerationFileResourcesAsync(cancellationToken).ConfigureAwait(false);
+        return resources
+            .Where(x => x.TypeOfDownload == "TotalDownload")
+            .Where(x => x.TypeOfData == "Current")
+            .OrderByDescending(x => x.GenerationNumber);
+    }
+
+    public async Task<DatafordelerFile> LatestGenerationFileResourceCurrentTotalDownloadAsync(
         string resourceName,
         CancellationToken cancellationToken = default)
     {
-        var resources = await LatestGenerationFileResourcesAsync(resourceName, cancellationToken).ConfigureAwait(false);
-
+        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
         return resources
             .Where(x => x.EntityName == resourceName)
-            .Where(x => x.TypeOfDownload == "TotalDownload")
-            .Where(x => x.TypeOfData == "Current")
-            .OrderByDescending(x => x.GenerationNumber)
             .First();
     }
 
