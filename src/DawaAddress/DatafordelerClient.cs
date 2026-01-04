@@ -599,34 +599,39 @@ public class DatafordelerClient
             var tempFileName = $"{Path.GetTempPath()}/{Guid.NewGuid()}";
             var tempFileNameZip = $"{tempFileName}.zip";
 
-            var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
-            var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
-
-            using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
+            try
             {
-                await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
-            }
+                var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
+                var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
 
-            ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
-
-            var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
-
-            using (var fs = new FileStream(jsonfileName, FileMode.Open))
-            {
-                var resources = JsonSerializer.DeserializeAsyncEnumerable<T1?>(fs, cancellationToken: cancellationToken);
-                await foreach (var resource in resources.ConfigureAwait(false))
+                using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
                 {
-                    if (resource is null)
-                    {
-                        throw new ArgumentException($"Could not deserialize JSON output from DAWA for {resourceName}.");
-                    }
+                    await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+                }
 
-                    yield return fMap(resource);
+                ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
+
+                var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
+
+                using (var fs = new FileStream(jsonfileName, FileMode.Open))
+                {
+                    var resources = JsonSerializer.DeserializeAsyncEnumerable<T1?>(fs, cancellationToken: cancellationToken);
+                    await foreach (var resource in resources.ConfigureAwait(false))
+                    {
+                        if (resource is null)
+                        {
+                            throw new ArgumentException($"Could not deserialize JSON output from DAWA for {resourceName}.");
+                        }
+
+                        yield return fMap(resource);
+                    }
                 }
             }
-
-            File.Delete(tempFileNameZip);
-            Directory.Delete(tempFileName, true);
+            finally
+            {
+                File.Delete(tempFileNameZip);
+                Directory.Delete(tempFileName, true);
+            }
         }
 
     private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
