@@ -16,7 +16,6 @@ public class DatafordelerClientTest
             .LatestGenerationNumberCurrentTotalDownloadAsync()
             .ConfigureAwait(false);
 
-        Console.WriteLine(latestGenerationNumber.Value);
         latestGenerationNumber.Should().NotBeNull();
         latestGenerationNumber.Value.Should().BeGreaterThan(500);
     }
