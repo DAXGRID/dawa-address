@@ -456,7 +456,7 @@ public class DatafordelerClient
         // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
         if (datafordelerAccessAddress.NavngivenVej is null)
         {
-            Console.WriteLine($"Could not find adgangspunkt with id: '{datafordelerAccessAddress.Adgangspunkt}' on access address with id: '{datafordelerAccessAddress.IdLokalId}'.");
+            Console.WriteLine($"Could not map access address with id: '{datafordelerAccessAddress.IdLokalId}' since it does not contain the required reference 'NavngivenVej'.");
             return null;
         }
 
