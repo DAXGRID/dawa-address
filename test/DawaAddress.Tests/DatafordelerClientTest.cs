@@ -17,7 +17,8 @@ public class DatafordelerClientTest
             .ConfigureAwait(false);
 
         latestGenerationNumber.Should().NotBeNull();
-        latestGenerationNumber.Value.Should().BeGreaterThan(500);
+        latestGenerationNumber.Value.generationNumber.Should().BeGreaterThan(500);
+        latestGenerationNumber.Value.dateTime.Should().NotBeSameDateAs(new DateTime());
     }
 
     [Fact]

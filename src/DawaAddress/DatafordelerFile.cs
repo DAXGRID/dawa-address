@@ -33,4 +33,8 @@ public record DatafordelerFile
 
     [JsonPropertyName("containedFileFormat")]
     public required string ContainedFileFormat { get; init; }
+
+    [JsonPropertyName("pointInTime")]
+    public required DateTime? PointInTime { get; init; }
+
 }

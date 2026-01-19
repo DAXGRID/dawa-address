@@ -17,5 +17,5 @@ public class DatafordelerRoad
     public required string Status { get; set; }
 
     [JsonPropertyName("vejnavn")]
-    public required string Vejnavn { get; set; }
+    public string? Vejnavn { get; set; }
 }

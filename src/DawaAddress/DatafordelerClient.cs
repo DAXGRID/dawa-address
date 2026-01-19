@@ -78,23 +78,39 @@ public class DatafordelerClient
         _apiKey = apiKey;
     }
 
-    public async Task<int?> LatestGenerationNumberCurrentTotalDownloadAsync(
+    public async Task<(int generationNumber, DateTime dateTime)?> LatestGenerationNumberCurrentTotalDownloadAsync(
         CancellationToken cancellationToken = default)
     {
         var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
         var resourcesGroupedByEntityName = resources
             .GroupBy(x => x.EntityName);
 
-        var generationNumbers = new List<int>();
+        var generationNumbers = new List<(int generationNumber, DateTime? timeStamp)>();
         foreach (var resourceByEntityName in resourcesGroupedByEntityName)
         {
-            generationNumbers.Add(
-                resourceByEntityName.OrderByDescending(x => x.GenerationNumber).First().GenerationNumber);
+            var resource = resourceByEntityName.OrderByDescending(x => x.GenerationNumber).First();
+
+            generationNumbers.Add(new (resource.GenerationNumber, resource.PointInTime));
         }
 
-        return generationNumbers.Distinct().Count() == 1
-            ? generationNumbers.First()
-            : null;
+        if (generationNumbers.Select(x => x.generationNumber).Distinct().Count() == 1)
+        {
+            var result = generationNumbers.First();
+
+            // The dataset from datafordeleren is really bad so some of the generation timestamps are null values.
+            if (result.timeStamp is null)
+            {
+                return null;
+            }
+            else
+            {
+                return (result.generationNumber, result.timeStamp.Value);
+            }
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesAsync(
@@ -264,13 +280,18 @@ public class DatafordelerClient
     {
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
-        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad>(
+        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad?>(
                            "Navngivenvej",
                            _apiKey,
                            MapRoad,
                            cancellationToken)
                        .ConfigureAwait(false))
         {
+            if (x is null)
+            {
+                continue;
+            }
+
             if (includeStatuses.Contains(x.Status))
             {
                 yield return x;
@@ -284,7 +305,7 @@ public class DatafordelerClient
         DatafordelerRoadStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>(
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad?>(
                            "Navngivenvej",
                            fromDate,
                            toDate,
@@ -294,6 +315,11 @@ public class DatafordelerClient
                            cancellationToken)
                        .ConfigureAwait(false))
         {
+            if (x is null)
+            {
+                continue;
+            }
+
             yield return x;
         }
     }
@@ -508,8 +534,14 @@ public class DatafordelerClient
         );
     }
 
-    private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)
+    private static DawaRoad? MapRoad(DatafordelerRoad datafordelerRoad)
     {
+        // If roadname is null we don't want it in since it cannot be displayed.
+        if (datafordelerRoad.Vejnavn is null)
+        {
+            return null;
+        }
+
         return new DawaRoad
         {
             Id = Guid.Parse(datafordelerRoad.IdLokalId),
