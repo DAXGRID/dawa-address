@@ -280,18 +280,13 @@ public class DatafordelerClient
     {
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
-        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad?>(
+        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad>(
                            "Navngivenvej",
                            _apiKey,
                            MapRoad,
                            cancellationToken)
                        .ConfigureAwait(false))
         {
-            if (x is null)
-            {
-                continue;
-            }
-
             if (includeStatuses.Contains(x.Status))
             {
                 yield return x;
@@ -305,7 +300,7 @@ public class DatafordelerClient
         DatafordelerRoadStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad?>(
+        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>(
                            "Navngivenvej",
                            fromDate,
                            toDate,
@@ -315,11 +310,6 @@ public class DatafordelerClient
                            cancellationToken)
                        .ConfigureAwait(false))
         {
-            if (x is null)
-            {
-                continue;
-            }
-
             yield return x;
         }
     }
@@ -534,20 +524,14 @@ public class DatafordelerClient
         );
     }
 
-    private static DawaRoad? MapRoad(DatafordelerRoad datafordelerRoad)
+    private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)
     {
-        // If roadname is null we don't want it in since it cannot be displayed.
-        if (datafordelerRoad.Vejnavn is null)
-        {
-            return null;
-        }
-
         return new DawaRoad
         {
             Id = Guid.Parse(datafordelerRoad.IdLokalId),
             Created = datafordelerRoad.VirkningFra,
             Updated = datafordelerRoad.DatafordelerOpdateringstid,
-            Name = datafordelerRoad.Vejnavn,
+            Name = datafordelerRoad.Vejnavn ?? "",
             Status = MapRoadStatus(datafordelerRoad.Status)
         };
     }
