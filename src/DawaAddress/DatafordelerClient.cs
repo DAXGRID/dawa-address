@@ -2,10 +2,10 @@ using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
-using System.IO.Compression;
 
 namespace DawaAddress;
 
@@ -90,7 +90,7 @@ public class DatafordelerClient
         {
             var resource = resourceByEntityName.OrderByDescending(x => x.GenerationNumber).First();
 
-            generationNumbers.Add(new (resource.GenerationNumber, resource.PointInTime));
+            generationNumbers.Add(new(resource.GenerationNumber, resource.PointInTime));
         }
 
         if (generationNumbers.Select(x => x.generationNumber).Distinct().Count() == 1)
@@ -187,7 +187,7 @@ public class DatafordelerClient
             sogneIndelingLookup.Add(Guid.Parse(x.IdLokalId), x);
         }
 
-        var postalCodeLookup  = new Dictionary<Guid, DawaPostCode>();
+        var postalCodeLookup = new Dictionary<Guid, DawaPostCode>();
         await foreach (var postalCode in GetAllPostCodesAsync(cancellationToken).ConfigureAwait(false))
         {
             postalCodeLookup.Add(postalCode.Id, postalCode);
@@ -412,7 +412,7 @@ public class DatafordelerClient
             Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
             AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer),
             Created = datafordelerUnitAddress.VirkningFra,
-            Updated = datafordelerUnitAddress.DatafordelerOpdateringstid,
+            Updated = datafordelerUnitAddress.RegistreringFra,
             FloorName = datafordelerUnitAddress.Etagebetegnelse,
             Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
             SuitName = datafordelerUnitAddress.Drbetegnelse
@@ -426,7 +426,7 @@ public class DatafordelerClient
             Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
             AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer.IdLokalId),
             Created = datafordelerUnitAddress.VirkningFra,
-            Updated = datafordelerUnitAddress.DatafordelerOpdateringstid,
+            Updated = datafordelerUnitAddress.RegistreringFra,
             FloorName = datafordelerUnitAddress.Etagebetegnelse,
             Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
             SuitName = datafordelerUnitAddress.Drbetegnelse
@@ -450,9 +450,9 @@ public class DatafordelerClient
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
             HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
-            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.DatafordelerOpdateringstid,
+            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.OprindelseRegistrering,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
-            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
+            Updated = datafordelerAccessAddress.RegistreringFra,
             RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
             Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
             PlotId = datafordelerAccessAddress.Jordstykke,
@@ -500,9 +500,9 @@ public class DatafordelerClient
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
             HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
-            LocationUpdated = adgangsPunkt.DatafordelerOpdateringstid,
+            LocationUpdated = adgangsPunkt.RegistreringFra,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling,
-            Updated = datafordelerAccessAddress.DatafordelerOpdateringstid,
+            Updated = datafordelerAccessAddress.RegistreringFra,
             RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
             Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
             PlotId = datafordelerAccessAddress.Jordstykke,
@@ -520,7 +520,7 @@ public class DatafordelerClient
             datafordelerPostCode.Postnr,
             MapPostCodeStatus(datafordelerPostCode.Status),
             datafordelerPostCode.VirkningFra,
-            datafordelerPostCode.DatafordelerOpdateringstid
+            datafordelerPostCode.RegistreringFra
         );
     }
 
@@ -530,7 +530,7 @@ public class DatafordelerClient
         {
             Id = Guid.Parse(datafordelerRoad.IdLokalId),
             Created = datafordelerRoad.VirkningFra,
-            Updated = datafordelerRoad.DatafordelerOpdateringstid,
+            Updated = datafordelerRoad.RegistreringFra,
             Name = datafordelerRoad.Vejnavn ?? "",
             Status = MapRoadStatus(datafordelerRoad.Status)
         };
@@ -611,44 +611,44 @@ public class DatafordelerClient
         string apiKey,
         Func<T1, T2> fMap,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var tempFileName = $"{Path.GetTempPath()}/{Guid.NewGuid()}";
+        var tempFileNameZip = $"{tempFileName}.zip";
+
+        try
         {
-            var tempFileName = $"{Path.GetTempPath()}/{Guid.NewGuid()}";
-            var tempFileNameZip = $"{tempFileName}.zip";
+            var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
+            var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
 
-            try
+            using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
             {
-                var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
-                var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
-
-                using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
-                {
-                    await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
-                }
-
-                ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
-
-                var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
-
-                using (var fs = new FileStream(jsonfileName, FileMode.Open))
-                {
-                    var resources = JsonSerializer.DeserializeAsyncEnumerable<T1?>(fs, cancellationToken: cancellationToken);
-                    await foreach (var resource in resources.ConfigureAwait(false))
-                    {
-                        if (resource is null)
-                        {
-                            throw new ArgumentException($"Could not deserialize JSON output from DAWA for {resourceName}.");
-                        }
-
-                        yield return fMap(resource);
-                    }
-                }
+                await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
             }
-            finally
+
+            ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
+
+            var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
+
+            using (var fs = new FileStream(jsonfileName, FileMode.Open))
             {
-                File.Delete(tempFileNameZip);
-                Directory.Delete(tempFileName, true);
+                var resources = JsonSerializer.DeserializeAsyncEnumerable<T1?>(fs, cancellationToken: cancellationToken);
+                await foreach (var resource in resources.ConfigureAwait(false))
+                {
+                    if (resource is null)
+                    {
+                        throw new ArgumentException($"Could not deserialize JSON output from DAWA for {resourceName}.");
+                    }
+
+                    yield return fMap(resource);
+                }
             }
         }
+        finally
+        {
+            File.Delete(tempFileNameZip);
+            Directory.Delete(tempFileName, true);
+        }
+    }
 
     private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
         string resourceName,

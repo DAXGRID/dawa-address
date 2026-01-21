@@ -389,6 +389,14 @@ public class DatafordelerClientTest
         unitAddresses.Select(x => x.Status)
             .Should()
             .AllSatisfy(x => x.Should().Match(x => x == DawaStatus.Active || x == DawaStatus.Pending));
+
+        unitAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        unitAddresses.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 
     [Fact]
@@ -425,6 +433,14 @@ public class DatafordelerClientTest
         unitAddresses.Select(x => x.Status)
             .Should()
             .AllBeEquivalentTo(DawaStatus.Active);
+
+        unitAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        unitAddresses.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 
     [Fact]
@@ -461,6 +477,14 @@ public class DatafordelerClientTest
         unitAddresses.Select(x => x.Status)
             .Should()
             .AllBeEquivalentTo(DawaStatus.Pending);
+
+        unitAddresses.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        unitAddresses.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 
     [Fact]
@@ -515,6 +539,10 @@ public class DatafordelerClientTest
         await foreach (var resource in client.GetAllRoadsAsync(new() { DawaRoadStatus.Effective, DawaRoadStatus.Temporary }))
         {
             resources.Add(resource);
+            if (resources.Count == 10000)
+            {
+                break;
+            }
         }
 
         resources
@@ -534,6 +562,10 @@ public class DatafordelerClientTest
             .AllSatisfy(x => x.Should().Match(x => x == DawaRoadStatus.Effective || x == DawaRoadStatus.Temporary));
 
         resources.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        resources.Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
@@ -572,6 +604,10 @@ public class DatafordelerClientTest
         resources.Select(x => x.Created)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        resources.Select(x => x.Updated)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }
 
     [Fact]
@@ -606,6 +642,10 @@ public class DatafordelerClientTest
             .AllSatisfy(x => x.Should().NotBeEmpty());
 
         resources.Select(x => x.Created)
+            .Should()
+            .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
+
+        resources.Select(x => x.Updated)
             .Should()
             .AllSatisfy(x => x.Should().BeAfter(new DateTime()));
     }

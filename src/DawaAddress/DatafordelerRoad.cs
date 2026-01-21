@@ -13,6 +13,9 @@ public class DatafordelerRoad
     [JsonPropertyName("virkningFra")]
     public required DateTime VirkningFra { get; set; }
 
+    [JsonPropertyName("registreringFra")]
+    public required DateTime RegistreringFra { get; set; }
+
     [JsonPropertyName("status")]
     public required string Status { get; set; }
 

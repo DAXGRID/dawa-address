@@ -28,6 +28,9 @@ public class AdgangspunktFileServer
     [JsonPropertyName("datafordelerOpdateringstid")]
     public required DateTime DatafordelerOpdateringstid { get; set; }
 
+    [JsonPropertyName("registreringFra")]
+    public required DateTime RegistreringFra { get; set; }
+
     [JsonPropertyName("position")]
     public required string Position { get; set; }
 }
@@ -39,6 +42,9 @@ public class Adgangspunkt
 
     [JsonPropertyName("position")]
     public required string Position { get; set; }
+
+    [JsonPropertyName("oprindelse_registrering")]
+    public required DateTime OprindelseRegistrering { get; set; }
 }
 
 public class Afstemningsområde
