@@ -12,9 +12,8 @@ public class DatafordelerClientTest
         var httpClient = new HttpClient();
         var client = new DatafordelerClient(httpClient, ApiKey);
 
-        var latestGenerationNumber = await client 
-            .LatestGenerationNumberCurrentTotalDownloadAsync()
-            .ConfigureAwait(false);
+        var latestGenerationNumber = await client
+            .LatestGenerationNumberCurrentTotalDownloadAsync();
 
         latestGenerationNumber.Should().NotBeNull();
         latestGenerationNumber.Value.generationNumber.Should().BeGreaterThan(500);
@@ -29,8 +28,7 @@ public class DatafordelerClientTest
         var client = new DatafordelerClient(httpClient, ApiKey);
 
         var fileResource = await client
-            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType)
-            .ConfigureAwait(false);
+            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType);
 
         fileResource.Should().NotBeNull();
         fileResource.FileName.Should().NotBeEmpty();
@@ -51,8 +49,7 @@ public class DatafordelerClientTest
         var client = new DatafordelerClient(httpClient, ApiKey);
 
         var fileResource = await client
-            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType)
-            .ConfigureAwait(false);
+            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType);
 
         fileResource.Should().NotBeNull();
         fileResource.FileName.Should().NotBeEmpty();

@@ -625,7 +625,7 @@ public class DatafordelerClient
                 await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
             }
 
-            ZipFile.ExtractToDirectory(tempFileNameZip, tempFileName);
+            await ZipFile.ExtractToDirectoryAsync(tempFileNameZip, tempFileName, cancellationToken).ConfigureAwait(false);
 
             var jsonfileName = Directory.EnumerateFiles(tempFileName, "*.json*", SearchOption.AllDirectories).First();
 
