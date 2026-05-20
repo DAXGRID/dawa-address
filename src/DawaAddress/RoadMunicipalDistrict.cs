@@ -46,7 +46,7 @@ public record NamedRoadMunicipalDistrict
     [JsonPropertyName("navngivenvej_id")]
     public required Guid NamedRoadId { get; init; }
 
-    public NamedRoadMunicipalDistrict() {}
+    public NamedRoadMunicipalDistrict() { }
 
     [JsonConstructor]
     public NamedRoadMunicipalDistrict(

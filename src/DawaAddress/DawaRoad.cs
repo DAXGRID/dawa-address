@@ -29,7 +29,7 @@ public record DawaRoad
     [JsonPropertyName("ændret")]
     public required DateTime Updated { get; init; }
 
-    public DawaRoad() {}
+    public DawaRoad() { }
 
     [JsonConstructor]
     public DawaRoad(

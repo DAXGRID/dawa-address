@@ -46,7 +46,7 @@ public record DawaAccessAddress
     [JsonPropertyName("navngivenvej_id")]
     public Guid RoadId { get; init; }
 
-    public DawaAccessAddress() {}
+    public DawaAccessAddress() { }
 
     [JsonConstructor]
     public DawaAccessAddress(

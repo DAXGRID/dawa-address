@@ -1,0 +1,117 @@
+using System.Text.Json.Serialization;
+
+namespace DawaAddress;
+
+public class SupplerendeByNavnFileServer
+{
+    [JsonPropertyName("id_lokalId")]
+    public required string IdLokalId { get; set; }
+
+    [JsonPropertyName("navn")]
+    public required string Navn { get; set; }
+}
+
+public class AdgangspunktFileServer
+{
+    [JsonPropertyName("id_lokalId")]
+    public required string IdLokalId { get; set; }
+
+    [JsonPropertyName("datafordelerOpdateringstid")]
+    public required DateTime DatafordelerOpdateringstid { get; set; }
+
+    [JsonPropertyName("registreringFra")]
+    public required DateTime RegistreringFra { get; set; }
+
+    [JsonPropertyName("virkningFra")]
+    public required DateTime VirkningFra { get; set; }
+
+    [JsonPropertyName("position")]
+    public required string Position { get; set; }
+}
+
+public class NavngivenVej
+{
+    [JsonPropertyName("id_lokalId")]
+    public required string IdLokalId { get; set; }
+}
+
+public class DatafordelerAccessAddressFileServer
+{
+    [JsonPropertyName("datafordelerOpdateringstid")]
+    public required DateTime DatafordelerOpdateringstid { get; set; }
+
+    [JsonPropertyName("adgangsadressebetegnelse")]
+    public required string Adgangsadressebetegnelse { get; set; }
+
+    [JsonPropertyName("adgangTilBygning")]
+    public string? AdgangTilBygning { get; set; }
+
+    [JsonPropertyName("afstemningsområde")]
+    public required string Afstemningsomrde { get; set; }
+
+    [JsonPropertyName("forretningshændelse")]
+    public required string Forretningshndelse { get; set; }
+
+    [JsonPropertyName("forretningsområde")]
+    public required string Forretningsomrde { get; set; }
+
+    [JsonPropertyName("forretningsproces")]
+    public required string Forretningsproces { get; set; }
+
+    [JsonPropertyName("geoDanmarkBygning")]
+    public string? GeoDanmarkBygning { get; set; }
+
+    [JsonPropertyName("husnummerretning")]
+    public required string Husnummerretning { get; set; }
+
+    [JsonPropertyName("husnummertekst")]
+    public string? Husnummertekst { get; set; }
+
+    [JsonPropertyName("id_lokalId")]
+    public required string IdLokalId { get; set; }
+
+    [JsonPropertyName("id_namespace")]
+    public required string IdNamespace { get; set; }
+
+    [JsonPropertyName("jordstykke")]
+    public string? Jordstykke { get; set; }
+
+    [JsonPropertyName("kommuneinddeling")]
+    public required string Kommuneinddeling { get; set; }
+
+    [JsonPropertyName("menighedsrådsafstemningsområde")]
+    public string? Menighedsrdsafstemningsomrde { get; set; }
+
+    [JsonPropertyName("registreringFra")]
+    public required DateTime RegistreringFra { get; set; }
+
+    [JsonPropertyName("registreringsaktør")]
+    public required string Registreringsaktr { get; set; }
+
+    [JsonPropertyName("sogneinddeling")]
+    public required string Sogneinddeling { get; set; }
+
+    [JsonPropertyName("status")]
+    public required string Status { get; set; }
+
+    [JsonPropertyName("vejmidte")]
+    public required string Vejmidte { get; set; }
+
+    [JsonPropertyName("virkningFra")]
+    public required DateTime VirkningFra { get; set; }
+
+    [JsonPropertyName("virkningsaktør")]
+    public required string Virkningsaktr { get; set; }
+
+    [JsonPropertyName("navngivenVej")]
+    public required string NavngivenVej { get; set; }
+
+    [JsonPropertyName("postnummer")]
+    public required string Postnummer { get; set; }
+
+    [JsonPropertyName("adgangspunkt")]
+    public required string Adgangspunkt { get; set; }
+
+    [JsonPropertyName("supplerendeBynavn")]
+    public required string? SupplerendeBynavn { get; set; }
+}

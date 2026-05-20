@@ -1,10 +1,11 @@
+using System.Text.Json;
+
 namespace DawaAddress.Tests;
 
 public class DatafordelerClientTest
 {
     // Insert API key here.
     const string ApiKey = "";
-
 
     [Fact]
     public async Task Get_latest_generation_number_current_total()
@@ -369,7 +370,7 @@ public class DatafordelerClientTest
             {
                 break;
             }
-       }
+        }
 
         unitAddresses
             .Should()

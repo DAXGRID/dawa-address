@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
-public class DatafordelerRoad
+public class DatafordelerRoadFileServer
 {
     [JsonPropertyName("datafordelerOpdateringstid")]
     public required DateTime DatafordelerOpdateringstid { get; set; }

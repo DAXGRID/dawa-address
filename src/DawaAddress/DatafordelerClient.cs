@@ -1,3 +1,5 @@
+using GraphQL;
+using GraphQL.Client.Http;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using System.ComponentModel;
@@ -65,17 +67,21 @@ public enum DatafordelerNamedRoadMunicipalDistrictStatus
 }
 #pragma warning restore CA1008
 
-public class DatafordelerClient
+public sealed class DatafordelerClient : IDisposable
 {
     private const string _baseAddress = "https://services.datafordeler.dk/DAR/DAR/3.0.0/rest";
     private const string _baseAddressApi = "https://api.datafordeler.dk";
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
+    private readonly GraphQLHttpClient _graphqlClient;
 
     public DatafordelerClient(HttpClient httpClient, string apiKey)
     {
         _httpClient = httpClient;
         _apiKey = apiKey;
+        _graphqlClient = new GraphQLHttpClient(
+            $"https://graphql.datafordeler.dk/flexibleCurrent/v1?apikey={_apiKey}",
+            new GraphQL.Client.Serializer.SystemTextJson.SystemTextJsonSerializer());
     }
 
     public async Task<(int generationNumber, DateTime dateTime)?> LatestGenerationNumberCurrentTotalDownloadAsync(
@@ -220,22 +226,127 @@ public class DatafordelerClient
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var wktReader = new WKTReader();
-        await foreach (var x in GetAllAsync<DatafordelerAccessAddressApi, DawaAccessAddress?>(
-                           "Husnummer",
-                           fromDate,
-                           toDate,
-                           true,
-                           (DatafordelerAccessAddressApi x) => { return MapAccessAddress(x, wktReader); },
-                           (int?)status, cancellationToken)
-                       .ConfigureAwait(false))
-        {
-            // It might be NULL if the address is invalid.
-            if (x is null)
+
+        const int count = 200;
+        string? after = null;
+
+        dynamic whereCondition = status is not null
+            ? new
             {
-                continue;
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                },
+                status = new
+                {
+                    eq = ((int)status).ToString(CultureInfo.InvariantCulture)
+                }
+            }
+            : new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                }
+            };
+
+        while (true)
+        {
+            var request = new GraphQLRequest
+            {
+                Query = @"
+        query ($virkningstid: DafDateTime! $first: Int! $after: String $where: DAR_HusnummerFilterInput) {
+          DAR_Husnummer(virkningstid: $virkningstid first: $first after: $after where: $where) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              adgangsadressebetegnelse
+              virkningTil
+              virkningsaktoer
+              virkningFra
+              vejpunkt
+              vejmidte
+              supplerendeBynavn
+              status
+              sogneinddeling
+              registreringTil
+              registreringsaktoer
+              registreringFra
+              placeretPaaForeloebigtJordstykke
+              navngivenVej
+              menighedsraadsafstemningsomraade
+              kommuneinddeling
+              jordstykke
+              id_namespace
+              id_lokalId
+              husnummertekst
+              geoDanmarkBygning
+              forretningsproces
+              forretningsomraade
+              forretningshaendelse
+              datafordelerRowId
+              datafordelerRegisterImportSequenceNumber
+              datafordelerRowVersion
+              datafordelerOpdateringstid
+              afstemningsomraade
+              adgangTilTekniskAnlaeg
+              adgangTilBygning
+              adgangspunkt
+              husnummerHoererTilIPostnummer {
+                id_lokalId
+                navn
+                postnr
+              }
+              HusnummerHarAdgangspunkt {
+                position {
+                  wkt
+                }
+                virkningFra
+              }
+              husnummerLiggerISogneInddeling {
+                id_lokalId
+                navn
+              }
+            }
+          }
+        }",
+                Variables = new
+                {
+                    virkningstid = toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    first = count,
+                    after = after,
+                    where = whereCondition
+                }
+            };
+
+            var response = await _graphqlClient.SendQueryAsync<DatafordelerAccessAddressGraphqlResponse>(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.Errors?.Length > 0)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Errors));
             }
 
-            yield return x;
+            foreach (var datafordelerAccessAddress in response.Data.DarHusnummer.Nodes)
+            {
+                var mapped = MapAccessAddress(datafordelerAccessAddress, wktReader);
+
+                // It might be NULL if the address is invalid.
+                if (mapped is null)
+                {
+                    continue;
+                }
+
+                yield return mapped;
+            }
+
+            if (!response.Data.DarHusnummer.PageInfo.HasNextPage)
+            {
+                break;
+            }
+
+            after = response.Data.DarHusnummer.PageInfo!.EndCursor;
         }
     }
 
@@ -263,16 +374,93 @@ public class DatafordelerClient
         DatafordelerUnitAddressStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerUnitAddressApi, DawaUnitAddress>(
-                           "Adresse",
-                           fromDate,
-                           toDate,
-                           false,
-                           MapUnitAddress,
-                           (int?)status, cancellationToken)
-                       .ConfigureAwait(false))
+        const int count = 200;
+        string? after = null;
+
+        dynamic whereCondition = status is not null
+            ? new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                },
+                status = new
+                {
+                    eq = ((int)status).ToString(CultureInfo.InvariantCulture)
+                }
+            }
+            : new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                }
+            };
+
+        while (true)
         {
-            yield return x;
+            var request = new GraphQLRequest
+            {
+                Query = @"
+        query ($virkningstid: DafDateTime! $first: Int! $after: String $where: DAR_AdresseFilterInput) {
+          DAR_Adresse(virkningstid: $virkningstid first: $first after: $after where: $where) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              adressebetegnelse
+              forretningshaendelse
+              etagebetegnelse
+              doerbetegnelse
+              doerpunkt
+              datafordelerRowVersion
+              datafordelerRowId
+              datafordelerRegisterImportSequenceNumber
+              virkningTil
+              virkningsaktoer
+              virkningFra
+              status
+              registreringTil
+              registreringsaktoer
+              registreringFra
+              id_namespace
+              id_lokalId
+              husnummer
+              forretningsproces
+              forretningsomraade
+              datafordelerOpdateringstid
+              bygning
+            }
+          }
+        }",
+                Variables = new
+                {
+                    virkningstid = toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    first = count,
+                    after = after,
+                    where = whereCondition
+                }
+            };
+
+            var response = await _graphqlClient.SendQueryAsync<DatafordelerUnitAddressGraphqlResponse>(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.Errors?.Length > 0)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Errors));
+            }
+
+            foreach (var datafordelerUnitAddress in response.Data.DarAdresse.Nodes)
+            {
+                yield return MapUnitAddress(datafordelerUnitAddress);
+            }
+
+            if (!response.Data.DarAdresse.PageInfo.HasNextPage)
+            {
+                break;
+            }
+
+            after = response.Data.DarAdresse.PageInfo!.EndCursor;
         }
     }
 
@@ -280,7 +468,7 @@ public class DatafordelerClient
     {
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
-        await foreach (var x in GetAllFromFileAsync<DatafordelerRoad, DawaRoad>(
+        await foreach (var x in GetAllFromFileAsync<DatafordelerRoadFileServer, DawaRoad>(
                            "Navngivenvej",
                            _apiKey,
                            MapRoad,
@@ -300,23 +488,98 @@ public class DatafordelerClient
         DatafordelerRoadStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerRoad, DawaRoad>(
-                           "Navngivenvej",
-                           fromDate,
-                           toDate,
-                           false,
-                           MapRoad,
-                           (int?)status,
-                           cancellationToken)
-                       .ConfigureAwait(false))
+        const int count = 200;
+        string? after = null;
+
+        dynamic whereCondition = status is not null
+            ? new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                },
+                status = new
+                {
+                    eq = ((int)status).ToString(CultureInfo.InvariantCulture)
+                }
+            }
+            : new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                }
+            };
+
+        while (true)
         {
-            yield return x;
+            var request = new GraphQLRequest
+            {
+                Query = @"
+        query ($virkningstid: DafDateTime! $first: Int! $after: String $where: DAR_NavngivenVejFilterInput) {
+          DAR_NavngivenVej(virkningstid: $virkningstid first: $first after: $after where: $where) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+               virkningTil
+              virkningFra
+              virkningsaktoer
+              vejnavn
+              vejadresseringsnavn
+              udtaltVejnavn
+              status
+              registreringTil
+              registreringsaktoer
+              registreringFra
+              id_namespace
+              id_lokalId
+              forretningsproces
+              forretningsomraade
+              forretningshaendelse
+              datafordelerRowVersion
+              datafordelerRowId
+              datafordelerRegisterImportSequenceNumber
+              datafordelerOpdateringstid
+              beskrivelse
+              administreresAfKommune
+            }
+          }
+        }",
+                Variables = new
+                {
+                    virkningstid = toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    first = count,
+                    after = after,
+                    where = whereCondition
+                }
+            };
+
+            var response = await _graphqlClient.SendQueryAsync<DatafordelerRoadGraphqlResponse>(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.Errors?.Length > 0)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Errors));
+            }
+
+            foreach (var datafordelerRoad in response.Data.DarNavngivenVej.Nodes)
+            {
+                yield return MapRoad(datafordelerRoad);
+            }
+
+            if (!response.Data.DarNavngivenVej.PageInfo.HasNextPage)
+            {
+                break;
+            }
+
+            after = response.Data.DarNavngivenVej.PageInfo!.EndCursor;
         }
     }
 
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllFromFileAsync<DatafordelerPostCode, DawaPostCode>(
+        await foreach (var x in GetAllFromFileAsync<DatafordelerPostCodeFileServer, DawaPostCode>(
                            "Postnummer",
                            _apiKey,
                            MapPostCode,
@@ -333,17 +596,90 @@ public class DatafordelerClient
         DatafordelerPostCodeStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerPostCode, DawaPostCode>(
-                           "postnummer",
-                           fromDate,
-                           toDate,
-                           true,
-                           MapPostCode,
-                           (int?)status,
-                           cancellationToken)
-                       .ConfigureAwait(false))
+        const int count = 200;
+        string? after = null;
+
+        dynamic whereCondition = status is not null
+            ? new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                },
+                status = new
+                {
+                    eq = ((int)status).ToString(CultureInfo.InvariantCulture)
+                }
+            }
+            : new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                }
+            };
+
+        while (true)
         {
-            yield return x;
+            var request = new GraphQLRequest
+            {
+                Query = @"
+        query ($virkningstid: DafDateTime! $first: Int! $after: String $where: DAR_PostnummerFilterInput) {
+          DAR_Postnummer(virkningstid: $virkningstid first: $first after: $after where: $where) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              datafordelerOpdateringstid
+              datafordelerRegisterImportSequenceNumber
+              datafordelerRowId
+              datafordelerRowVersion
+              forretningshaendelse
+              forretningsomraade
+              forretningsproces
+              virkningTil
+              virkningsaktoer
+              virkningFra
+              status
+              registreringTil
+              registreringsaktoer
+              registreringFra
+              postnummerinddeling
+              postnr
+              navn
+              id_namespace
+              id_lokalId
+            }
+          }
+        }",
+                Variables = new
+                {
+                    virkningstid = toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    first = count,
+                    after = after,
+                    where = whereCondition
+                }
+            };
+
+            var response = await _graphqlClient.SendQueryAsync<DatafordelerPostCodeGraphqlResponse>(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.Errors?.Length > 0)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Errors));
+            }
+
+            foreach (var datafordelerPostCode in response.Data.DarPostnummer.Nodes)
+            {
+                yield return MapPostCode(datafordelerPostCode);
+            }
+
+            if (!response.Data.DarPostnummer.PageInfo.HasNextPage)
+            {
+                break;
+            }
+
+            after = response.Data.DarPostnummer.PageInfo!.EndCursor;
         }
     }
 
@@ -353,17 +689,90 @@ public class DatafordelerClient
         DatafordelerNamedRoadMunicipalDistrictStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        await foreach (var x in GetAllAsync<DatafordelerNamedRoadMunicipalDistrict, NamedRoadMunicipalDistrict>(
-                           "NavngivenvejKommunedel",
-                           fromDate,
-                           toDate,
-                           false,
-                           MapNamedRoadMunicipalDistrict,
-                           (int?)status,
-                           cancellationToken)
-                       .ConfigureAwait(false))
+        const int count = 200;
+        string? after = null;
+
+        dynamic whereCondition = status is not null
+            ? new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                },
+                status = new
+                {
+                    eq = ((int)status).ToString(CultureInfo.InvariantCulture)
+                }
+            }
+            : new
+            {
+                virkningFra = new
+                {
+                    gte = fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                }
+            };
+
+        while (true)
         {
-            yield return x;
+            var request = new GraphQLRequest
+            {
+                Query = @"
+        query ($virkningstid: DafDateTime! $first: Int! $after: String $where: DAR_NavngivenVejKommunedelFilterInput) {
+          DAR_NavngivenVejKommunedel(virkningstid: $virkningstid first: $first after: $after where: $where) {
+            pageInfo {
+              endCursor
+              hasNextPage
+            }
+            nodes {
+              virkningTil
+              virkningsaktoer
+              vejkode
+              status
+              virkningFra
+              registreringTil
+              registreringsaktoer
+              registreringFra
+              navngivenVej
+              kommune
+              id_namespace
+              id_lokalId
+              forretningsproces
+              forretningsomraade
+              forretningshaendelse
+              datafordelerRowVersion
+              datafordelerRegisterImportSequenceNumber
+              datafordelerRowId
+              datafordelerOpdateringstid
+            }
+          }
+        }",
+                Variables = new
+                {
+                    virkningstid = toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
+                    first = count,
+                    after = after,
+                    where = whereCondition
+                }
+            };
+
+            var response = await _graphqlClient.SendQueryAsync<DatafordelerNamedRoadMunicipalDistrictGraphqlResponse>(request, cancellationToken).ConfigureAwait(false);
+
+            if (response.Errors?.Length > 0)
+            {
+                Console.WriteLine(JsonSerializer.Serialize(response.Errors));
+            }
+
+            foreach (var datafordelerNamedRoadMunicipalDistrict in response.Data.DarNavngivenVejKommunedel.Nodes)
+            {
+                yield return MapNamedRoadMunicipalDistrict(datafordelerNamedRoadMunicipalDistrict);
+            }
+
+            if (!response.Data.DarNavngivenVejKommunedel.PageInfo.HasNextPage)
+            {
+                break;
+            }
+
+            after = response.Data.DarNavngivenVejKommunedel.PageInfo!.EndCursor;
         }
     }
 
@@ -409,56 +818,56 @@ public class DatafordelerClient
     {
         return new DawaUnitAddress
         {
-            Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
+            Id = datafordelerUnitAddress.IdLokalId,
             AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer),
             Created = datafordelerUnitAddress.VirkningFra,
-            Updated = datafordelerUnitAddress.RegistreringFra,
+            Updated = datafordelerUnitAddress.VirkningFra,
             FloorName = datafordelerUnitAddress.Etagebetegnelse,
             Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
             SuitName = datafordelerUnitAddress.Drbetegnelse
         };
     }
 
-    private static DawaUnitAddress MapUnitAddress(DatafordelerUnitAddressApi datafordelerUnitAddress)
+    private static DawaUnitAddress MapUnitAddress(AddressNode datafordelerUnitAddress)
     {
         return new DawaUnitAddress
         {
-            Id = Guid.Parse(datafordelerUnitAddress.IdLokalId),
-            AccessAddressId = Guid.Parse(datafordelerUnitAddress.Husnummer.IdLokalId),
+            Id = datafordelerUnitAddress.IdLokalId,
+            AccessAddressId = datafordelerUnitAddress.Husnummer,
             Created = datafordelerUnitAddress.VirkningFra,
-            Updated = datafordelerUnitAddress.RegistreringFra,
+            Updated = datafordelerUnitAddress.VirkningFra,
             FloorName = datafordelerUnitAddress.Etagebetegnelse,
             Status = MapUnitAddressStatus(datafordelerUnitAddress.Status),
-            SuitName = datafordelerUnitAddress.Drbetegnelse
+            SuitName = datafordelerUnitAddress.Doerbetegnelse
         };
     }
 
-    private static DawaAccessAddress? MapAccessAddress(DatafordelerAccessAddressApi datafordelerAccessAddress, WKTReader wktReader)
+    private static DawaAccessAddress? MapAccessAddress(HusnummerNode from, WKTReader wktReader)
     {
         // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
-        if (datafordelerAccessAddress.NavngivenVej is null)
+        if (from.NavngivenVej is null)
         {
             return null;
         }
 
-        var point = (Point)wktReader.Read(datafordelerAccessAddress.Adgangspunkt.Position);
+        var point = (Point)wktReader.Read(from.HusnummerHarAdgangspunkt.Position.Wkt);
 
         return new DawaAccessAddress
         {
-            Created = datafordelerAccessAddress.VirkningFra,
-            Id = Guid.Parse(datafordelerAccessAddress.IdLokalId),
+            Created = from.VirkningFra,
+            Id = Guid.Parse(from.IdLokalId),
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
-            HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
-            LocationUpdated = datafordelerAccessAddress.Adgangspunkt.OprindelseRegistrering,
-            MunicipalCode = datafordelerAccessAddress.Kommuneinddeling.Id,
-            Updated = datafordelerAccessAddress.RegistreringFra,
-            RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
-            Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
-            PlotId = datafordelerAccessAddress.Jordstykke,
-            PostDistrictCode = datafordelerAccessAddress.Postnummer.Postnr,
-            RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej.IdLokalId),
-            SupplementaryTownName = datafordelerAccessAddress.SupplerendeBynavn?.Navn
+            HouseNumber = string.IsNullOrWhiteSpace(from.Husnummertekst) ? "?" : from.Husnummertekst,
+            LocationUpdated = from.HusnummerHarAdgangspunkt.VirkningFra,
+            MunicipalCode = from.Kommuneinddeling,
+            Updated = from.VirkningFra,
+            RoadCode = from.Vejmidte.Split("-").Last(),
+            Status = MapAccessAddressStatus(from.Status),
+            PlotId = from.Jordstykke,
+            PostDistrictCode = from.HusnummerHoererTilPostnummer.Postnr,
+            RoadId = Guid.Parse(from.NavngivenVej),
+            SupplementaryTownName = from.SupplerendeBynavn
         };
     }
 
@@ -500,9 +909,9 @@ public class DatafordelerClient
             EastCoordinate = point.X,
             NorthCoordinate = point.Y,
             HouseNumber = string.IsNullOrWhiteSpace(datafordelerAccessAddress.Husnummertekst) ? "?" : datafordelerAccessAddress.Husnummertekst,
-            LocationUpdated = adgangsPunkt.RegistreringFra,
+            LocationUpdated = adgangsPunkt.VirkningFra,
             MunicipalCode = datafordelerAccessAddress.Kommuneinddeling,
-            Updated = datafordelerAccessAddress.RegistreringFra,
+            Updated = datafordelerAccessAddress.VirkningFra,
             RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
             Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
             PlotId = datafordelerAccessAddress.Jordstykke,
@@ -512,7 +921,7 @@ public class DatafordelerClient
         };
     }
 
-    private static DawaPostCode MapPostCode(DatafordelerPostCode datafordelerPostCode)
+    private static DawaPostCode MapPostCode(DatafordelerPostCodeFileServer datafordelerPostCode)
     {
         return new DawaPostCode(
             Guid.Parse(datafordelerPostCode.IdLokalId),
@@ -520,23 +929,47 @@ public class DatafordelerClient
             datafordelerPostCode.Postnr,
             MapPostCodeStatus(datafordelerPostCode.Status),
             datafordelerPostCode.VirkningFra,
-            datafordelerPostCode.RegistreringFra
+            datafordelerPostCode.VirkningFra
         );
     }
 
-    private static DawaRoad MapRoad(DatafordelerRoad datafordelerRoad)
+    private static DawaPostCode MapPostCode(PostnummerNode datafordelerPostCode)
+    {
+        return new DawaPostCode(
+            datafordelerPostCode.IdLokalId,
+            datafordelerPostCode.Navn,
+            datafordelerPostCode.Postnr,
+            MapPostCodeStatus(datafordelerPostCode.Status),
+            datafordelerPostCode.VirkningFra,
+            datafordelerPostCode.VirkningFra
+        );
+    }
+
+    private static DawaRoad MapRoad(DatafordelerRoadFileServer datafordelerRoad)
     {
         return new DawaRoad
         {
             Id = Guid.Parse(datafordelerRoad.IdLokalId),
             Created = datafordelerRoad.VirkningFra,
-            Updated = datafordelerRoad.RegistreringFra,
+            Updated = datafordelerRoad.VirkningFra,
             Name = datafordelerRoad.Vejnavn ?? "",
             Status = MapRoadStatus(datafordelerRoad.Status)
         };
     }
 
-    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(DatafordelerNamedRoadMunicipalDistrict datafordelerNamedRoadMunicipalDistrict)
+    private static DawaRoad MapRoad(NavngivenVejNode datafordelerRoad)
+    {
+        return new DawaRoad
+        {
+            Id = datafordelerRoad.IdLokalId,
+            Created = datafordelerRoad.VirkningFra,
+            Updated = datafordelerRoad.VirkningFra,
+            Name = datafordelerRoad.Vejnavn ?? "",
+            Status = MapRoadStatus(datafordelerRoad.Status)
+        };
+    }
+
+    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(DatafordelerNamedRoadMunicipalDistrictFileServerFileServer datafordelerNamedRoadMunicipalDistrict)
     {
         return new NamedRoadMunicipalDistrict
         {
@@ -544,6 +977,18 @@ public class DatafordelerClient
             Status = MapNamedRoadMunicipalDistrictStatus(datafordelerNamedRoadMunicipalDistrict.Status),
             MunicipalityCode = datafordelerNamedRoadMunicipalDistrict.Kommune,
             NamedRoadId = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.NavngivenVej.IdLokalId),
+            RoadCode = datafordelerNamedRoadMunicipalDistrict.Vejkode
+        };
+    }
+
+    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(NavngivenVejKommunedelNode datafordelerNamedRoadMunicipalDistrict)
+    {
+        return new NamedRoadMunicipalDistrict
+        {
+            Id = datafordelerNamedRoadMunicipalDistrict.IdLokalId,
+            Status = MapNamedRoadMunicipalDistrictStatus(datafordelerNamedRoadMunicipalDistrict.Status),
+            MunicipalityCode = datafordelerNamedRoadMunicipalDistrict.Kommune,
+            NamedRoadId = datafordelerNamedRoadMunicipalDistrict.NavngivenVej,
             RoadCode = datafordelerNamedRoadMunicipalDistrict.Vejkode
         };
     }
@@ -687,6 +1132,14 @@ public class DatafordelerClient
             }
 
             page++;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_graphqlClient is not null)
+        {
+            _graphqlClient.Dispose();
         }
     }
 }

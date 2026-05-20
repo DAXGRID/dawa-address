@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
-public class DatafordelerPostCode
+public class DatafordelerNamedRoadMunicipalDistrictFileServerFileServer
 {
     [JsonPropertyName("datafordelerOpdateringstid")]
     public required DateTime DatafordelerOpdateringstid { get; set; }
@@ -22,14 +22,8 @@ public class DatafordelerPostCode
     [JsonPropertyName("id_namespace")]
     public required string IdNamespace { get; set; }
 
-    [JsonPropertyName("navn")]
-    public required string Navn { get; set; }
-
-    [JsonPropertyName("postnr")]
-    public required string Postnr { get; set; }
-
-    [JsonPropertyName("postnummerinddeling")]
-    public required string Postnummerinddeling { get; set; }
+    [JsonPropertyName("kommune")]
+    public required string Kommune { get; set; }
 
     [JsonPropertyName("registreringFra")]
     public required DateTime RegistreringFra { get; set; }
@@ -40,10 +34,15 @@ public class DatafordelerPostCode
     [JsonPropertyName("status")]
     public required string Status { get; set; }
 
+    [JsonPropertyName("vejkode")]
+    public required string Vejkode { get; set; }
+
     [JsonPropertyName("virkningFra")]
     public required DateTime VirkningFra { get; set; }
 
     [JsonPropertyName("virkningsaktør")]
     public required string Virkningsaktr { get; set; }
-}
 
+    [JsonPropertyName("navngivenVej")]
+    public required NavngivenVej NavngivenVej { get; set; }
+}
