@@ -22,6 +22,27 @@ public class DatafordelerClientTest
     }
 
     [Fact]
+    public async Task Get_lastest_generation_total_entity_file_resource_for_navngivenvej()
+    {
+        var resourceType = "NavngivenVej";
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient, ApiKey);
+
+        var fileResource = await client
+            .LatestGenerationFileResourceCurrentTotalDownloadAsync(resourceType);
+
+        fileResource.Should().NotBeNull();
+        fileResource.FileName.Should().NotBeEmpty();
+        fileResource.Register.Should().Be("DAR");
+        fileResource.EntityName.Should().Be(resourceType);
+        fileResource.TypeOfDownload.Should().Be("TotalDownload");
+        fileResource.TypeOfData.Should().Be("Current");
+        fileResource.GenerationNumber.Should().BeGreaterThan(496);
+        fileResource.Version.Should().Be("3");
+        fileResource.ContainedFileFormat.Should().Be("json");
+    }
+
+    [Fact]
     public async Task Get_lastest_generation_total_entity_file_resource_for_husnummer()
     {
         var resourceType = "Husnummer";

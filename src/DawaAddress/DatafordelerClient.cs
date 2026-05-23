@@ -78,6 +78,7 @@ public sealed class DatafordelerClient : IDisposable
     public DatafordelerClient(HttpClient httpClient, string apiKey)
     {
         _httpClient = httpClient;
+        _httpClient.Timeout = TimeSpan.FromMinutes(30);
         _apiKey = apiKey;
         _graphqlClient = new GraphQLHttpClient(
             $"https://graphql.datafordeler.dk/flexibleCurrent/v1?apikey={_apiKey}",
@@ -158,6 +159,14 @@ public sealed class DatafordelerClient : IDisposable
         var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
         return resources
             .Where(x => x.EntityName == resourceName)
+            // This is done because sometimes there can be multiple total downloads with a subset.
+            // Don't ask me why, an exaple is:
+            // Full:
+            // DAR_V3_NavngivenVej_TotalDownload_json_Current_636.zip
+            // Subsets:
+            // DAR_V3_Adressepunkt_0766_TotalDownload_json_Current_636.zip
+            // DAR_V3_Adressepunkt_0787_TotalDownload_json_Current_636.zip
+            .Where(x => x.FileName.StartsWith($"DAR_V3_{resourceName}_TotalDownload_json_Current_", StringComparison.CurrentCultureIgnoreCase))
             .First();
     }
 
@@ -469,7 +478,7 @@ public sealed class DatafordelerClient : IDisposable
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
         await foreach (var x in GetAllFromFileAsync<DatafordelerRoadFileServer, DawaRoad>(
-                           "Navngivenvej",
+                           "NavngivenVej",
                            _apiKey,
                            MapRoad,
                            cancellationToken)
@@ -778,10 +787,10 @@ public sealed class DatafordelerClient : IDisposable
 
     private static Uri BuildResourcePathFileDownload(
         string baseUri,
-        string entityType,
+        string fileName,
         string apiKey)
     {
-        return new Uri($"{baseUri}/FileDownloads/GetFile?Register=DAR&LatestTotalForEntity={entityType}&type=current&format=JSON&apikey={apiKey}");
+        return new Uri($"{baseUri}/FileDownloads/GetFile?filename={fileName}&apikey={apiKey}");
     }
 
     private static Uri BuildResourcePath(
@@ -1062,12 +1071,20 @@ public sealed class DatafordelerClient : IDisposable
 
         try
         {
-            var uri = BuildResourcePathFileDownload(_baseAddressApi, resourceName, apiKey);
-            var response = await _httpClient.GetStreamAsync(uri, cancellationToken).ConfigureAwait(false);
+            var latestGenerationFile = await LatestGenerationFileResourceCurrentTotalDownloadAsync(
+                resourceName, cancellationToken).ConfigureAwait(false);
+
+            var uri = BuildResourcePathFileDownload(_baseAddressApi, latestGenerationFile.FileName, apiKey);
+
+            var response = await _httpClient.GetAsync(uri, cancellationToken).ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 
             using (var fs = new FileStream(tempFileNameZip, FileMode.Create))
             {
-                await response.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+                await stream.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
             }
 
             await ZipFile.ExtractToDirectoryAsync(tempFileNameZip, tempFileName, cancellationToken).ConfigureAwait(false);
@@ -1090,8 +1107,15 @@ public sealed class DatafordelerClient : IDisposable
         }
         finally
         {
-            File.Delete(tempFileNameZip);
-            Directory.Delete(tempFileName, true);
+            if (File.Exists(tempFileNameZip))
+            {
+                File.Delete(tempFileNameZip);
+            }
+
+            if (Directory.Exists(tempFileName))
+            {
+                Directory.Delete(tempFileName, true);
+            }
         }
     }
 
