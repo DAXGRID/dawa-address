@@ -11,7 +11,7 @@ namespace DawaAddress;
 // 3 - gældende navngivne veje
 // 4 - nedlagte navngivne veje
 // 5 - henlagte navngivne veje
-public enum NamedRoadMunicipalDistrictStatus
+public enum DawaNamedRoadMunicipalDistrictStatus
 {
     [Description("Temporary")]
     Temporary = 2,
@@ -41,7 +41,7 @@ public record NamedRoadMunicipalDistrict
     public string? RoadCode { get; init; }
 
     [JsonPropertyName("status")]
-    public required NamedRoadMunicipalDistrictStatus Status { get; init; }
+    public required DawaNamedRoadMunicipalDistrictStatus Status { get; init; }
 
     [JsonPropertyName("navngivenvej_id")]
     public required Guid NamedRoadId { get; init; }
@@ -53,7 +53,7 @@ public record NamedRoadMunicipalDistrict
         Guid id,
         string? municipalityCode,
         string? roadCode,
-        NamedRoadMunicipalDistrictStatus status,
+        DawaNamedRoadMunicipalDistrictStatus status,
         Guid namedRoadId)
     {
         Id = id;

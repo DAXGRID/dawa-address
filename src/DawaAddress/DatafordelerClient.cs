@@ -692,10 +692,28 @@ public sealed class DatafordelerClient : IDisposable
         }
     }
 
+    public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(HashSet<DawaNamedRoadMunicipalDistrictStatus> includeStatuses, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(includeStatuses);
+
+        await foreach (var x in GetAllFromFileAsync<DatafordelerNamedRoadMunicipalDistrictFileServer, NamedRoadMunicipalDistrict>(
+                           "NavngivenVejKommunedel",
+                           _apiKey,
+                           (x) => MapNamedRoadMunicipalDistrict(x),
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            if (includeStatuses.Contains(x.Status))
+            {
+                yield return x;
+            }
+        }
+    }
+
     public async IAsyncEnumerable<NamedRoadMunicipalDistrict> GetAllNamedRoadMunicipalDistrictsAsync(
         DateTime fromDate,
         DateTime toDate,
-        DatafordelerNamedRoadMunicipalDistrictStatus? status = null,
+        DawaNamedRoadMunicipalDistrictStatus? status = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         const int count = 200;
@@ -978,14 +996,14 @@ public sealed class DatafordelerClient : IDisposable
         };
     }
 
-    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(DatafordelerNamedRoadMunicipalDistrictFileServerFileServer datafordelerNamedRoadMunicipalDistrict)
+    private static NamedRoadMunicipalDistrict MapNamedRoadMunicipalDistrict(DatafordelerNamedRoadMunicipalDistrictFileServer datafordelerNamedRoadMunicipalDistrict)
     {
         return new NamedRoadMunicipalDistrict
         {
-            Id = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.IdLokalId),
+            Id = datafordelerNamedRoadMunicipalDistrict.IdLokalId,
             Status = MapNamedRoadMunicipalDistrictStatus(datafordelerNamedRoadMunicipalDistrict.Status),
             MunicipalityCode = datafordelerNamedRoadMunicipalDistrict.Kommune,
-            NamedRoadId = Guid.Parse(datafordelerNamedRoadMunicipalDistrict.NavngivenVej.IdLokalId),
+            NamedRoadId = datafordelerNamedRoadMunicipalDistrict.NavngivenVej,
             RoadCode = datafordelerNamedRoadMunicipalDistrict.Vejkode
         };
     }
@@ -1048,14 +1066,14 @@ public sealed class DatafordelerClient : IDisposable
         };
     }
 
-    private static NamedRoadMunicipalDistrictStatus MapNamedRoadMunicipalDistrictStatus(string status)
+    private static DawaNamedRoadMunicipalDistrictStatus MapNamedRoadMunicipalDistrictStatus(string status)
     {
         return status switch
         {
-            "2" => NamedRoadMunicipalDistrictStatus.Temporary,
-            "3" => NamedRoadMunicipalDistrictStatus.Active,
-            "4" => NamedRoadMunicipalDistrictStatus.Discontinued,
-            "5" => NamedRoadMunicipalDistrictStatus.Canceled,
+            "2" => DawaNamedRoadMunicipalDistrictStatus.Temporary,
+            "3" => DawaNamedRoadMunicipalDistrictStatus.Active,
+            "4" => DawaNamedRoadMunicipalDistrictStatus.Discontinued,
+            "5" => DawaNamedRoadMunicipalDistrictStatus.Canceled,
             _ => throw new ArgumentException($"Could not convert: '{status}'.")
         };
     }

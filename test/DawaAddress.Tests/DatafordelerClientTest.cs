@@ -679,7 +679,45 @@ public class DatafordelerClientTest
         var toDate = DateTime.UtcNow;
 
         var namedRoadMunicipalDistricts = new List<NamedRoadMunicipalDistrict>();
-        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(fromDate, toDate, DatafordelerNamedRoadMunicipalDistrictStatus.Active))
+        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(fromDate, toDate, DawaNamedRoadMunicipalDistrictStatus.Active))
+        {
+            namedRoadMunicipalDistricts.Add(namedRoadMunicipalDistrict);
+
+            if (namedRoadMunicipalDistricts.Count == 1000)
+            {
+                break;
+            }
+        }
+
+        namedRoadMunicipalDistricts
+             .Should()
+             .HaveCount(1000);
+
+        namedRoadMunicipalDistricts.Select(x => x.Id)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.RoadCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.MunicipalityCode)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+
+        namedRoadMunicipalDistricts.Select(x => x.NamedRoadId)
+            .Should()
+            .AllSatisfy(x => x.Should().NotBeEmpty());
+    }
+
+    [Fact]
+    public async Task Get_named_road_municipal_districts_active_from_file()
+    {
+        var httpClient = new HttpClient();
+        var client = new DatafordelerClient(httpClient, ApiKey);
+
+        var namedRoadMunicipalDistricts = new List<NamedRoadMunicipalDistrict>();
+        await foreach (var namedRoadMunicipalDistrict in client.GetAllNamedRoadMunicipalDistrictsAsync(new () { DawaNamedRoadMunicipalDistrictStatus.Active }))
         {
             namedRoadMunicipalDistricts.Add(namedRoadMunicipalDistrict);
 

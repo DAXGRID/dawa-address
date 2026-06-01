@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace DawaAddress;
 
-public class DatafordelerNamedRoadMunicipalDistrictFileServerFileServer
+public class DatafordelerNamedRoadMunicipalDistrictFileServer
 {
     [JsonPropertyName("datafordelerOpdateringstid")]
     public required DateTime DatafordelerOpdateringstid { get; set; }
@@ -17,7 +17,7 @@ public class DatafordelerNamedRoadMunicipalDistrictFileServerFileServer
     public required string Forretningsproces { get; set; }
 
     [JsonPropertyName("id_lokalId")]
-    public required string IdLokalId { get; set; }
+    public required Guid IdLokalId { get; set; }
 
     [JsonPropertyName("id_namespace")]
     public required string IdNamespace { get; set; }
@@ -44,5 +44,5 @@ public class DatafordelerNamedRoadMunicipalDistrictFileServerFileServer
     public required string Virkningsaktr { get; set; }
 
     [JsonPropertyName("navngivenVej")]
-    public required NavngivenVej NavngivenVej { get; set; }
+    public required Guid NavngivenVej { get; set; }
 }
