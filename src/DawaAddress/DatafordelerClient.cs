@@ -318,6 +318,9 @@ public sealed class DatafordelerClient : IDisposable
                 id_lokalId
                 navn
               }
+              husnummerHoererTilSupplerendeBynavn {
+                navn
+              }
             }
           }
         }",
@@ -894,7 +897,7 @@ public sealed class DatafordelerClient : IDisposable
             PlotId = from.Jordstykke,
             PostDistrictCode = from.HusnummerHoererTilPostnummer.Postnr,
             RoadId = Guid.Parse(from.NavngivenVej),
-            SupplementaryTownName = from.SupplerendeBynavn
+            SupplementaryTownName = from.HusnummerHoererTilSupplerendeBynavn?.Navn
         };
     }
 

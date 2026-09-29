@@ -135,6 +135,9 @@ public record HusnummerNode
 
     [JsonPropertyName("husnummerLiggerISogneInddeling")]
     public required HusnummerLiggerISogneInddeling? HusnummerLiggerISogneInddeling { get; set; }
+
+    [JsonPropertyName("husnummerHoererTilSupplerendeBynavn")]
+    public required HusnummerHoererTilSupplerendeBynavn? HusnummerHoererTilSupplerendeBynavn { get; set; }
 }
 
 public record HusnummerHoererTilPostnummer
@@ -169,6 +172,12 @@ public record HusnummerLiggerISogneInddeling
     [JsonPropertyName("id_lokalId")]
     public required string IdLokalId { get; set; }
 
+    [JsonPropertyName("navn")]
+    public required string Navn { get; set; }
+}
+
+public record HusnummerHoererTilSupplerendeBynavn
+{
     [JsonPropertyName("navn")]
     public required string Navn { get; set; }
 }
