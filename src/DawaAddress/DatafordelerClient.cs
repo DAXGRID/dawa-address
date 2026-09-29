@@ -69,7 +69,6 @@ public enum DatafordelerNamedRoadMunicipalDistrictStatus
 
 public sealed class DatafordelerClient : IDisposable
 {
-    private const string _baseAddress = "https://services.datafordeler.dk/DAR/DAR/3.0.0/rest";
     private const string _baseAddressApi = "https://api.datafordeler.dk";
     private readonly string _apiKey;
     private readonly HttpClient _httpClient;
@@ -1137,46 +1136,6 @@ public sealed class DatafordelerClient : IDisposable
             {
                 Directory.Delete(tempFileName, true);
             }
-        }
-    }
-
-    private async IAsyncEnumerable<T2> GetAllAsync<T1, T2>(
-        string resourceName,
-        DateTime fromDate,
-        DateTime toDate,
-        bool includeNestedData,
-        Func<T1, T2> fMap,
-        int? status = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        const int pageSize = 200;
-        var page = 1;
-
-        while (true)
-        {
-            var resourcePath = BuildResourcePath(_baseAddress, resourceName, fromDate, toDate, pageSize, page, status, includeNestedData);
-            var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
-
-            response.EnsureSuccessStatusCode();
-
-            var resources = await response.Content.ReadFromJsonAsync<T1[]>(cancellationToken).ConfigureAwait(false);
-
-            if (resources is null)
-            {
-                throw new InvalidOperationException($"Received NULL when trying to get {resourceName} codes from path: '{resourcePath}'.");
-            }
-
-            foreach (var resource in resources)
-            {
-                yield return fMap(resource);
-            }
-
-            if (resources.Length < pageSize)
-            {
-                break;
-            }
-
-            page++;
         }
     }
 
