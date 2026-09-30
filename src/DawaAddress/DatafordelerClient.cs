@@ -8,6 +8,7 @@ using System.IO.Compression;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace DawaAddress;
 
@@ -85,9 +86,10 @@ public sealed class DatafordelerClient : IDisposable
     }
 
     public async Task<(int generationNumber, DateTime dateTime)?> LatestGenerationNumberCurrentTotalDownloadAsync(
+        string registryName,
         CancellationToken cancellationToken = default)
     {
-        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
+        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(registryName, cancellationToken).ConfigureAwait(false);
         var resourcesGroupedByEntityName = resources
             .GroupBy(x => x.EntityName);
 
@@ -120,9 +122,10 @@ public sealed class DatafordelerClient : IDisposable
     }
 
     public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesAsync(
+        string registryName,
         CancellationToken cancellationToken = default)
     {
-        var resourcePath = new Uri($"{_baseAddressApi}/FileDownloads/GetAvailableFileDownloads?Register=DAR&format=JSON&apikey={_apiKey}");
+        var resourcePath = new Uri($"{_baseAddressApi}/FileDownloads/GetAvailableFileDownloads?Register={registryName}&format=JSON&apikey={_apiKey}&Version=3");
 
         var response = await _httpClient.GetAsync(resourcePath, cancellationToken).ConfigureAwait(false);
 
@@ -142,9 +145,10 @@ public sealed class DatafordelerClient : IDisposable
     }
 
     public async Task<IEnumerable<DatafordelerFile>> LatestGenerationFileResourcesCurrentTotalDownloadAsync(
+        string registryName,
         CancellationToken cancellationToken = default)
     {
-        var resources = await LatestGenerationFileResourcesAsync(cancellationToken).ConfigureAwait(false);
+        var resources = await LatestGenerationFileResourcesAsync(registryName, cancellationToken).ConfigureAwait(false);
         return resources
             .Where(x => x.TypeOfDownload == "TotalDownload")
             .Where(x => x.TypeOfData == "Current")
@@ -152,10 +156,11 @@ public sealed class DatafordelerClient : IDisposable
     }
 
     public async Task<DatafordelerFile> LatestGenerationFileResourceCurrentTotalDownloadAsync(
+        string registryName,
         string resourceName,
         CancellationToken cancellationToken = default)
     {
-        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(cancellationToken).ConfigureAwait(false);
+        var resources = await LatestGenerationFileResourcesCurrentTotalDownloadAsync(registryName, cancellationToken).ConfigureAwait(false);
         return resources
             .Where(x => x.EntityName == resourceName)
             // This is done because sometimes there can be multiple total downloads with a subset.
@@ -165,7 +170,7 @@ public sealed class DatafordelerClient : IDisposable
             // Subsets:
             // DAR_V3_Adressepunkt_0766_TotalDownload_json_Current_636.zip
             // DAR_V3_Adressepunkt_0787_TotalDownload_json_Current_636.zip
-            .Where(x => x.FileName.StartsWith($"DAR_V3_{resourceName}_TotalDownload_json_Current_", StringComparison.CurrentCultureIgnoreCase))
+            .Where(x => Regex.IsMatch(x.FileName, $"{registryName}_V3_[A-Za-z]*_TotalDownload_[A-Za-z]*_Current_[0-9]*.zip"))
             .First();
     }
 
@@ -176,6 +181,7 @@ public sealed class DatafordelerClient : IDisposable
 
         var adgangsPunktLookUp = new Dictionary<Guid, AdgangspunktFileServer>();
         await foreach (var x in GetAllFromFileAsync<AdgangspunktFileServer, AdgangspunktFileServer>(
+                           "DAR",
                            "Adressepunkt",
                            _apiKey,
                            (AdgangspunktFileServer x) => { return x; },
@@ -192,6 +198,7 @@ public sealed class DatafordelerClient : IDisposable
 
         var sogneIndelingLookup = new Dictionary<Guid, SupplerendeByNavnFileServer>();
         await foreach (var x in GetAllFromFileAsync<SupplerendeByNavnFileServer, SupplerendeByNavnFileServer>(
+                           "DAR",
                            "SupplerendeBynavn",
                            _apiKey,
                            (SupplerendeByNavnFileServer x) => { return x; },
@@ -207,10 +214,24 @@ public sealed class DatafordelerClient : IDisposable
             postalCodeLookup.Add(postalCode.Id, postalCode);
         }
 
+        var jordstykkeLookup = new Dictionary<string, DawaJordStykke>();
+        await foreach (var jordStykke in GetAllJordStykker(cancellationToken).ConfigureAwait(false))
+        {
+            if (!jordstykkeLookup.TryAdd(jordStykke.Id, jordStykke!))
+            {
+                Console.WriteLine(
+                    $"Could not add jordstykke with data: {JsonSerializer.Serialize(jordStykke)}, it already exist with data: {JsonSerializer.Serialize(jordstykkeLookup[jordStykke!.Id])}");
+            }
+        }
+
         await foreach (var x in GetAllFromFileAsync<DatafordelerAccessAddressFileServer, DawaAccessAddress?>(
+                           "DAR",
                            "Husnummer",
                            _apiKey,
-                           (DatafordelerAccessAddressFileServer x) => { return MapAccessAddress(x, wktReader, adgangsPunktLookUp, postalCodeLookup, sogneIndelingLookup); },
+                           (DatafordelerAccessAddressFileServer x) =>
+                           {
+                               return MapAccessAddress(x, wktReader, adgangsPunktLookUp, postalCodeLookup, sogneIndelingLookup, jordstykkeLookup);
+                           },
                            cancellationToken)
                        .ConfigureAwait(false))
         {
@@ -366,6 +387,7 @@ public sealed class DatafordelerClient : IDisposable
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
         await foreach (var x in GetAllFromFileAsync<DatafordelerUnitAddressFileServer, DawaUnitAddress>(
+                           "DAR",
                            "Adresse",
                            _apiKey,
                            MapUnitAddress,
@@ -480,6 +502,7 @@ public sealed class DatafordelerClient : IDisposable
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
         await foreach (var x in GetAllFromFileAsync<DatafordelerRoadFileServer, DawaRoad>(
+                           "DAR",
                            "NavngivenVej",
                            _apiKey,
                            MapRoad,
@@ -591,9 +614,24 @@ public sealed class DatafordelerClient : IDisposable
     public async IAsyncEnumerable<DawaPostCode> GetAllPostCodesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         await foreach (var x in GetAllFromFileAsync<DatafordelerPostCodeFileServer, DawaPostCode>(
+                           "DAR",
                            "Postnummer",
                            _apiKey,
                            MapPostCode,
+                           cancellationToken)
+                       .ConfigureAwait(false))
+        {
+            yield return x;
+        }
+    }
+
+    public async IAsyncEnumerable<DawaJordStykke> GetAllJordStykker([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await foreach (var x in GetAllFromFileAsync<DatafordelerJordStykkeFileServer, DawaJordStykke>(
+                           "MAT",
+                           "Jordstykke",
+                           _apiKey,
+                           MapJordStykke,
                            cancellationToken)
                        .ConfigureAwait(false))
         {
@@ -699,6 +737,7 @@ public sealed class DatafordelerClient : IDisposable
         ArgumentNullException.ThrowIfNull(includeStatuses);
 
         await foreach (var x in GetAllFromFileAsync<DatafordelerNamedRoadMunicipalDistrictFileServer, NamedRoadMunicipalDistrict>(
+                           "DAR",
                            "NavngivenVejKommunedel",
                            _apiKey,
                            (x) => MapNamedRoadMunicipalDistrict(x),
@@ -905,7 +944,8 @@ public sealed class DatafordelerClient : IDisposable
         WKTReader wktReader,
         Dictionary<Guid, AdgangspunktFileServer> adgangsPunktLookup,
         Dictionary<Guid, DawaPostCode> postalCodeLookup,
-        Dictionary<Guid, SupplerendeByNavnFileServer> supplementaryTownNameLookUp)
+        Dictionary<Guid, SupplerendeByNavnFileServer> supplementaryTownNameLookUp,
+        Dictionary<string, DawaJordStykke> jordStykkeLookup)
     {
         // In some weird cases they have no reference and that is an invalid address, so we cannot map it.
         if (datafordelerAccessAddress.NavngivenVej is null)
@@ -943,7 +983,7 @@ public sealed class DatafordelerClient : IDisposable
             Updated = datafordelerAccessAddress.VirkningFra,
             RoadCode = datafordelerAccessAddress.Vejmidte.Split("-").Last(),
             Status = MapAccessAddressStatus(datafordelerAccessAddress.Status),
-            PlotId = datafordelerAccessAddress.Jordstykke,
+            PlotId = datafordelerAccessAddress.Jordstykke is not null ? jordStykkeLookup[datafordelerAccessAddress.Jordstykke].MatrikkelNummer : null,
             PostDistrictCode = postCode?.Number ?? "",
             RoadId = Guid.Parse(datafordelerAccessAddress.NavngivenVej),
             SupplementaryTownName = supplementaryTownName
@@ -960,6 +1000,15 @@ public sealed class DatafordelerClient : IDisposable
             datafordelerPostCode.VirkningFra,
             datafordelerPostCode.VirkningFra
         );
+    }
+
+    private static DawaJordStykke MapJordStykke(DatafordelerJordStykkeFileServer datafordelerJordStykke)
+    {
+        return new DawaJordStykke
+        {
+            Id = datafordelerJordStykke.IdLokalId,
+            MatrikkelNummer = datafordelerJordStykke.MatrikelNummer
+        };
     }
 
     private static DawaPostCode MapPostCode(PostnummerNode datafordelerPostCode)
@@ -1081,6 +1130,7 @@ public sealed class DatafordelerClient : IDisposable
     }
 
     private async IAsyncEnumerable<T2> GetAllFromFileAsync<T1, T2>(
+        string registryName,
         string resourceName,
         string apiKey,
         Func<T1, T2> fMap,
@@ -1091,8 +1141,7 @@ public sealed class DatafordelerClient : IDisposable
 
         try
         {
-            var latestGenerationFile = await LatestGenerationFileResourceCurrentTotalDownloadAsync(
-                resourceName, cancellationToken).ConfigureAwait(false);
+            var latestGenerationFile = await LatestGenerationFileResourceCurrentTotalDownloadAsync(registryName, resourceName, cancellationToken).ConfigureAwait(false);
 
             var uri = BuildResourcePathFileDownload(_baseAddressApi, latestGenerationFile.FileName, apiKey);
 
