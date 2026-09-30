@@ -138,6 +138,9 @@ public record HusnummerNode
 
     [JsonPropertyName("husnummerHoererTilSupplerendeBynavn")]
     public required HusnummerHoererTilSupplerendeBynavn? HusnummerHoererTilSupplerendeBynavn { get; set; }
+
+    [JsonPropertyName("husnummerErPlaceretPaaJordstykke")]
+    public required HusnummerErPlaceretPaaJordstykke? HusnummerErPlaceretPaaJordstykke { get; init; }
 }
 
 public record HusnummerHoererTilPostnummer
@@ -180,4 +183,16 @@ public record HusnummerHoererTilSupplerendeBynavn
 {
     [JsonPropertyName("navn")]
     public required string Navn { get; set; }
+}
+
+public record HusnummerErPlaceretPaaJordstykke
+{
+    [JsonPropertyName("nodes")]
+    public required IReadOnlyCollection<JordStykke>? Nodes { get; init; }
+}
+
+public record JordStykke
+{
+    [JsonPropertyName("matrikelnummer")]
+    public required string MatrikelNummer { get; init; }
 }

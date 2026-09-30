@@ -341,6 +341,11 @@ public sealed class DatafordelerClient : IDisposable
               husnummerHoererTilSupplerendeBynavn {
                 navn
               }
+              husnummerErPlaceretPaaJordstykke {
+                nodes {
+                  matrikelnummer
+                }
+              }
             }
           }
         }",
@@ -932,7 +937,7 @@ public sealed class DatafordelerClient : IDisposable
             Updated = from.VirkningFra,
             RoadCode = from.Vejmidte.Split("-").Last(),
             Status = MapAccessAddressStatus(from.Status),
-            PlotId = from.Jordstykke,
+            PlotId = from.HusnummerErPlaceretPaaJordstykke?.Nodes?.FirstOrDefault()?.MatrikelNummer,
             PostDistrictCode = from.HusnummerHoererTilPostnummer.Postnr,
             RoadId = Guid.Parse(from.NavngivenVej),
             SupplementaryTownName = from.HusnummerHoererTilSupplerendeBynavn?.Navn
